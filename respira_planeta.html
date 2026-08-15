@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Respira — meditación planetaria</title>
+<style>
+  :root{
+    --bg-deep: #05060f;
+    --bg-mid: #0b0f2a;
+    --lavender: #a78bfa;
+    --gold: #f0c987;
+    --teal: #6ee7d8;
+    --text-soft: #d8d9ee;
+    --text-dim: #8386ab;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{
+    height:100%;
+    background: radial-gradient(ellipse at 50% 20%, var(--bg-mid) 0%, var(--bg-deep) 70%);
+    overflow:hidden;
+    font-family: 'Georgia', 'Iowan Old Style', serif;
+    color: var(--text-soft);
+  }
+  #stars, #stars2, #stars3{
+    position:fixed; inset:0; pointer-events:none;
+  }
+  .app{
+    position:relative;
+    height:100vh;
+    width:100vw;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+  }
+
+  /* ---------- Planet system ---------- */
+  .planet-wrap{
+    position:relative;
+    width:min(60vw, 60vh);
+    height:min(60vw, 60vh);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .glow{
+    position:absolute;
+    width:120%;
+    height:120%;
+    border-radius:50%;
+    background: radial-gradient(circle, rgba(167,139,250,0.25) 0%, rgba(167,139,250,0.05) 45%, transparent 70%);
+    filter: blur(8px);
+    transition: transform 4s ease-in-out, opacity 4s ease-in-out;
+  }
+
+  .ring{
+    position:absolute;
+    width:150%;
+    aspect-ratio: 1;
+    border-radius:50%;
+    border: 1px solid rgba(240,201,135,0.35);
+    transform: rotateX(75deg);
+    transition: transform 4s ease-in-out, opacity 4s ease-in-out, border-color 4s ease;
+  }
+  .ring::before{
+    content:'';
+    position:absolute;
+    top:50%; left:0;
+    width:100%; height:1px;
+    background: linear-gradient(90deg, transparent, rgba(240,201,135,0.6), transparent);
+  }
+
+  .planet{
+    position:relative;
+    width:38%;
+    aspect-ratio:1;
+    border-radius:50%;
+    background:
+      radial-gradient(circle at 35% 30%, #cdb4f7 0%, #8a6fd8 35%, #4d3893 65%, #241a52 100%);
+    box-shadow:
+      inset -10px -10px 30px rgba(0,0,0,0.5),
+      inset 8px 8px 20px rgba(255,255,255,0.15),
+      0 0 60px rgba(167,139,250,0.35);
+    transition: transform 4s cubic-bezier(0.45,0,0.55,1), box-shadow 4s ease;
+    z-index:2;
+  }
+
+  .planet::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    background:
+      radial-gradient(ellipse at 20% 70%, rgba(255,255,255,0.06) 0%, transparent 30%),
+      radial-gradient(ellipse at 70% 40%, rgba(0,0,0,0.15) 0%, transparent 25%);
+  }
+
+  /* breathing states */
+  .app[data-phase="inhala"] .planet{ transform: scale(1.35); }
+  .app[data-phase="inhala"] .glow{ transform: scale(1.4); opacity:1; }
+  .app[data-phase="inhala"] .ring{ transform: rotateX(75deg) scale(1.3); opacity:1; }
+
+  .app[data-phase="sostén"] .planet{ transform: scale(1.35); }
+  .app[data-phase="sostén"] .glow{ transform: scale(1.4); opacity:1; }
+  .app[data-phase="sostén"] .ring{ transform: rotateX(75deg) scale(1.3); opacity:1; }
+
+  .app[data-phase="exhala"] .planet{ transform: scale(0.85); }
+  .app[data-phase="exhala"] .glow{ transform: scale(0.9); opacity:0.5; }
+  .app[data-phase="exhala"] .ring{ transform: rotateX(75deg) scale(0.95); opacity:0.6; }
+
+  .app[data-phase="pausa"] .planet{ transform: scale(0.85); }
+  .app[data-phase="pausa"] .glow{ transform: scale(0.9); opacity:0.5; }
+  .app[data-phase="pausa"] .ring{ transform: rotateX(75deg) scale(0.95); opacity:0.6; }
+
+  /* ---------- Text ---------- */
+  .phase-text{
+    position:absolute;
+    bottom:20%;
+    text-align:center;
+    z-index:3;
+  }
+  .phase-word{
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    letter-spacing: 0.08em;
+    font-weight:400;
+    color: var(--text-soft);
+    text-shadow: 0 0 30px rgba(167,139,250,0.5);
+    transition: opacity 0.6s ease;
+  }
+  .phase-count{
+    margin-top:0.5rem;
+    font-size:1rem;
+    color: var(--text-dim);
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    letter-spacing:0.15em;
+  }
+
+  /* ---------- Top info ---------- */
+  .top-bar{
+    position:fixed;
+    top:2rem;
+    left:0; right:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:1.5rem;
+    z-index:5;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+  .cycle-count{
+    font-size:0.85rem;
+    color: var(--text-dim);
+    letter-spacing:0.1em;
+  }
+
+  /* ---------- Controls ---------- */
+  .controls{
+    position:fixed;
+    bottom:2.2rem;
+    left:0; right:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:1rem;
+    z-index:5;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+  button{
+    background: rgba(167,139,250,0.08);
+    border: 1px solid rgba(167,139,250,0.3);
+    color: var(--text-soft);
+    padding: 0.7rem 1.6rem;
+    border-radius: 100px;
+    font-size:0.9rem;
+    letter-spacing:0.05em;
+    cursor:pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(6px);
+  }
+  button:hover{
+    background: rgba(167,139,250,0.18);
+    border-color: rgba(167,139,250,0.6);
+  }
+  button:focus-visible{
+    outline: 2px solid var(--teal);
+    outline-offset:2px;
+  }
+
+  select{
+    background: rgba(167,139,250,0.08);
+    border: 1px solid rgba(167,139,250,0.3);
+    color: var(--text-soft);
+    padding: 0.7rem 1rem;
+    border-radius: 100px;
+    font-size:0.85rem;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    cursor:pointer;
+  }
+  select:focus-visible{
+    outline: 2px solid var(--teal);
+  }
+
+  .hint{
+    position:fixed;
+    top: 5.5rem;
+    left:0; right:0;
+    text-align:center;
+    font-size:0.75rem;
+    color: var(--text-dim);
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    letter-spacing:0.05em;
+    z-index:5;
+    opacity:0.7;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .planet, .glow, .ring, .phase-word{ transition-duration: 0.3s !important; }
+  }
+
+  @media (max-width: 600px){
+    .top-bar{ top:1.2rem; gap:0.8rem; flex-wrap:wrap; }
+    .controls{ bottom:1.2rem; gap:0.6rem; }
+    button, select{ padding:0.6rem 1.1rem; font-size:0.8rem; }
+    .hint{ top:4.2rem; font-size:0.68rem; padding:0 1rem;}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+
+<div class="app" id="app" data-phase="listo">
+
+  <div class="top-bar">
+    <span class="cycle-count" id="cycleCount">Ciclo 0</span>
+  </div>
+
+  <div class="hint" id="hint">Elige un ritmo y presiona empezar</div>
+
+  <div class="planet-wrap">
+    <div class="glow"></div>
+    <div class="ring"></div>
+    <div class="planet"></div>
+  </div>
+
+  <div class="phase-text">
+    <div class="phase-word" id="phaseWord">Listo</div>
+    <div class="phase-count" id="phaseCount"></div>
+  </div>
+
+  <div class="controls">
+    <select id="patternSelect">
+      <option value="478">4 - 7 - 8</option>
+      <option value="446">4 - 4 - 6</option>
+      <option value="4444" selected>4 - 4 - 4 - 4 (caja)</option>
+      <option value="55">5 - 5</option>
+    </select>
+    <button id="toggleBtn">Empezar</button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  // ---------- Starfield ----------
+  const canvas = document.getElementById('stars');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+
+  function resize(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    stars = [];
+    const count = Math.floor((canvas.width * canvas.height) / 6000);
+    for(let i=0;i<count;i++){
+      stars.push({
+        x: Math.random()*canvas.width,
+        y: Math.random()*canvas.height,
+        r: Math.random()*1.3 + 0.2,
+        baseAlpha: Math.random()*0.6 + 0.2,
+        twinkleSpeed: Math.random()*0.02 + 0.005,
+        phase: Math.random()*Math.PI*2
+      });
+    }
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ---------- Comets ----------
+  let comets = [];
+  let lastCometTime = 0;
+  let nextCometDelay = 2000 + Math.random()*4000;
+
+  function spawnComet(){
+    // enter from a random edge (mostly top/left area, like real shooting stars)
+    const fromTop = Math.random() < 0.6;
+    let x, y, angle;
+    if(fromTop){
+      x = Math.random()*canvas.width*0.8;
+      y = -20;
+      angle = (Math.random()*20 + 35) * Math.PI/180; // diagonal down-right
+    } else {
+      x = -20;
+      y = Math.random()*canvas.height*0.5;
+      angle = (Math.random()*20 + 20) * Math.PI/180;
+    }
+    const speed = Math.random()*6 + 7;
+    comets.push({
+      x, y,
+      vx: Math.cos(angle)*speed,
+      vy: Math.sin(angle)*speed,
+      life: 0,
+      maxLife: Math.random()*40 + 50,
+      trail: []
+    });
+  }
+
+  function drawComets(){
+    comets.forEach(c=>{
+      c.trail.push({x:c.x, y:c.y});
+      if(c.trail.length > 14) c.trail.shift();
+      c.x += c.vx;
+      c.y += c.vy;
+      c.life++;
+
+      // trail
+      for(let i=0;i<c.trail.length;i++){
+        const p = c.trail[i];
+        const frac = i / c.trail.length;
+        const alpha = frac * 0.5 * (1 - c.life/c.maxLife);
+        const r = frac * 1.8;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, Math.max(0.2,r), 0, Math.PI*2);
+        ctx.fillStyle = `rgba(240,201,135,${Math.max(0,alpha)})`;
+        ctx.fill();
+      }
+      // head
+      const headAlpha = Math.max(0, 1 - c.life/c.maxLife);
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 1.6, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(255,244,224,${headAlpha})`;
+      ctx.shadowColor = 'rgba(240,201,135,0.9)';
+      ctx.shadowBlur = 8;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    });
+    comets = comets.filter(c => c.life < c.maxLife && c.x < canvas.width+30 && c.y < canvas.height+30);
+  }
+
+  function drawStars(t){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(const s of stars){
+      const a = s.baseAlpha + Math.sin(t*s.twinkleSpeed + s.phase)*0.25;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(216,217,238,${Math.max(0,Math.min(1,a))})`;
+      ctx.fill();
+    }
+
+    if(t - lastCometTime > nextCometDelay){
+      spawnComet();
+      lastCometTime = t;
+      nextCometDelay = 3000 + Math.random()*5000;
+    }
+    drawComets();
+
+    requestAnimationFrame(drawStars);
+  }
+  requestAnimationFrame(drawStars);
+
+  // ---------- Breathing engine ----------
+  const app = document.getElementById('app');
+  const phaseWord = document.getElementById('phaseWord');
+  const phaseCount = document.getElementById('phaseCount');
+  const cycleCountEl = document.getElementById('cycleCount');
+  const toggleBtn = document.getElementById('toggleBtn');
+  const patternSelect = document.getElementById('patternSelect');
+  const hint = document.getElementById('hint');
+
+  // patterns: [inhala, sostén(opcional), exhala, pausa(opcional)]
+  const patterns = {
+    '478': [
+      {label:'Inhala', dur:4},
+      {label:'Sostén', dur:7},
+      {label:'Exhala', dur:8}
+    ],
+    '446': [
+      {label:'Inhala', dur:4},
+      {label:'Sostén', dur:4},
+      {label:'Exhala', dur:6}
+    ],
+    '4444': [
+      {label:'Inhala', dur:4},
+      {label:'Sostén', dur:4},
+      {label:'Exhala', dur:4},
+      {label:'Pausa', dur:4}
+    ],
+    '55': [
+      {label:'Inhala', dur:5},
+      {label:'Exhala', dur:5}
+    ]
+  };
+
+  let running = false;
+  let cycle = 0;
+  let stepIndex = 0;
+  let secondsLeft = 0;
+  let tickTimer = null;
+
+  function phaseClass(label){
+    // matches CSS data-phase values (lowercase with accents)
+    const map = {
+      'Inhala':'inhala',
+      'Sostén':'sostén',
+      'Exhala':'exhala',
+      'Pausa':'pausa'
+    };
+    return map[label] || 'listo';
+  }
+
+  function startStep(steps){
+    const step = steps[stepIndex];
+    secondsLeft = step.dur;
+    app.setAttribute('data-phase', phaseClass(step.label));
+    // set transition duration to match this step's length
+    document.documentElement.style.setProperty('--dur', step.dur + 's');
+    phaseWord.style.transitionDuration = '0.6s';
+    phaseWord.textContent = step.label;
+    phaseCount.textContent = secondsLeft + 's';
+
+    // dynamically set css transition duration
+    const planet = document.querySelector('.planet');
+    const glow = document.querySelector('.glow');
+    const ring = document.querySelector('.ring');
+    [planet, glow, ring].forEach(el=>{
+      el.style.transitionDuration = step.dur + 's';
+    });
+  }
+
+  function tick(){
+    const patternKey = patternSelect.value;
+    const steps = patterns[patternKey];
+
+    secondsLeft -= 1;
+    if(secondsLeft <= 0){
+      stepIndex++;
+      if(stepIndex >= steps.length){
+        stepIndex = 0;
+        cycle++;
+        cycleCountEl.textContent = 'Ciclo ' + cycle;
+      }
+      startStep(steps);
+    } else {
+      phaseCount.textContent = secondsLeft + 's';
+    }
+  }
+
+  function start(){
+    running = true;
+    cycle = 0;
+    stepIndex = 0;
+    cycleCountEl.textContent = 'Ciclo 0';
+    toggleBtn.textContent = 'Detener';
+    patternSelect.disabled = true;
+    hint.style.opacity = '0';
+
+    const steps = patterns[patternSelect.value];
+    startStep(steps);
+    tickTimer = setInterval(tick, 1000);
+  }
+
+  function stop(){
+    running = false;
+    clearInterval(tickTimer);
+    toggleBtn.textContent = 'Empezar';
+    patternSelect.disabled = false;
+    app.setAttribute('data-phase', 'listo');
+    phaseWord.textContent = 'Listo';
+    phaseCount.textContent = '';
+    hint.style.opacity = '0.7';
+    hint.textContent = 'Elige un ritmo y presiona empezar';
+
+    const planet = document.querySelector('.planet');
+    const glow = document.querySelector('.glow');
+    const ring = document.querySelector('.ring');
+    [planet, glow, ring].forEach(el=>{
+      el.style.transitionDuration = '2s';
+    });
+  }
+
+  toggleBtn.addEventListener('click', ()=>{
+    if(running){ stop(); } else { start(); }
+  });
+
+})();
+</script>
+
+</body>
+</html>
