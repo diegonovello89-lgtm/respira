@@ -1,501 +1,1354 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Respira — meditación planetaria</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Pase HD">
+<meta name="theme-color" content="#0f766e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Pase HD</title>
+<script defer src="firebase-config.js"></script>
+<script defer src="vendor/firebase-app-compat.js"></script>
+<script defer src="vendor/firebase-auth-compat.js"></script>
+<script defer src="vendor/firebase-firestore-compat.js"></script>
 <style>
-  :root{
-    --bg-deep: #05060f;
-    --bg-mid: #0b0f2a;
-    --lavender: #a78bfa;
-    --gold: #f0c987;
-    --teal: #6ee7d8;
-    --text-soft: #d8d9ee;
-    --text-dim: #8386ab;
-  }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  html,body{
-    height:100%;
-    background: radial-gradient(ellipse at 50% 20%, var(--bg-mid) 0%, var(--bg-deep) 70%);
-    overflow:hidden;
-    font-family: 'Georgia', 'Iowan Old Style', serif;
-    color: var(--text-soft);
-  }
-  #stars, #stars2, #stars3{
-    position:fixed; inset:0; pointer-events:none;
-  }
-  .app{
-    position:relative;
-    height:100vh;
-    width:100vw;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-  }
+:root{--bg:#f2f5f7;--card:#fff;--tx:#0f1b24;--mu:#5b6b78;--ac:#0f766e;--onac:#fff;--ac2:#d5f5ef;--bd:#dce3e8;--wa:#b45309;--wabg:#fef3c7;--ok:#15803d;--okbg:#dcfce7;--dn:#b91c1c;--albg:#fee2e2}
+@media(prefers-color-scheme:dark){:root{--bg:#0b1218;--card:#141f28;--tx:#e8eef2;--mu:#8fa1ae;--ac:#2dd4bf;--onac:#06201e;--ac2:#0f3b38;--bd:#25343f;--wa:#fbbf24;--wabg:#3a2e0b;--ok:#4ade80;--okbg:#0f3320;--dn:#f87171;--albg:#3b1414}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+button,.card,.tab,nav,.chip,.sil,.nota,.th,.tg,.ib,.btn,summary{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea{-webkit-user-select:text;user-select:text}
+.lrow{display:flex;justify-content:space-between;align-items:flex-end}
+.lrow button{font-size:13px;color:var(--ac);font-weight:700;padding:6px 8px}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body.lock{overflow:hidden;overscroll-behavior-x:none}#ov{overscroll-behavior-x:none}
+#app{max-width:640px;margin:0 auto;padding:0 12px calc(96px + env(safe-area-inset-bottom))}
+#pane{display:none}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+.top{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(10px + env(safe-area-inset-top)) 0 8px}
+.datebar{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.datebar .d{flex:1;text-align:center;font-weight:700;font-size:18px;text-transform:capitalize;min-width:0}
+.datebar .d small{display:block;font-weight:500;color:var(--mu);font-size:13px;text-transform:none}
+.ib{width:44px;height:44px;flex:none;border-radius:12px;background:var(--card);border:1px solid var(--bd);font-size:20px}
+.ib.pl{background:var(--ac);color:var(--onac);border-color:var(--ac);font-size:26px;font-weight:700;line-height:1}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.tab{position:relative;height:48px;border-radius:12px;background:var(--card);border:1px solid var(--bd);font-weight:700}
+.tab.on{background:var(--ac);color:var(--onac);border-color:var(--ac)}
+.tab i{position:absolute;top:-6px;right:-4px;min-width:20px;height:20px;border-radius:10px;font-style:normal;font-size:12px;line-height:20px;padding:0 5px;font-weight:700}
+.tab i.w{background:var(--wa);color:#fff}.tab i.k{background:var(--ok);color:#fff}
+.card{display:grid;grid-template-columns:54px 1fr 64px;gap:10px;align-items:center;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:10px;margin-top:10px;cursor:pointer}
+.card[hidden]{display:none!important}.card{grid-template-columns:54px minmax(0,1fr)}.card.sel{border-color:var(--ac);box-shadow:0 0 0 2px var(--ac)}
+.sil{text-align:center;background:var(--ac2);border-radius:10px;padding:6px 0}.sil small{display:block;font-size:10px;color:var(--mu)}.sil b{font-size:22px}
+.nm{font-weight:700;overflow-wrap:anywhere}.ex{color:var(--mu);font-size:13px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.chip{font-size:12px;background:var(--ac2);border-radius:8px;padding:2px 7px}.chip.w{background:var(--wabg);color:var(--wa);font-weight:600}
+.cm{margin-top:4px;font-size:13px;color:var(--mu);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
+.nota{height:56px;border-radius:12px;border:2px solid var(--wa);background:var(--wabg);color:var(--wa);font-size:24px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.nota small{font-size:11px;font-weight:600}.nota.ok{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+.chip.ax{background:transparent;border:1px solid var(--bd);font-weight:600}
+.chip.al{background:var(--albg);color:var(--dn);font-weight:600}
+.chip.ev{background:var(--ac2);font-weight:600}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tg{padding:9px 13px;border-radius:20px;border:1px solid var(--bd);background:var(--card);font-size:14px}
+.tg.on{background:var(--ac);color:var(--onac);border-color:var(--ac);font-weight:700}
+.tgrow{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bd)}
+.tgrow span{flex:1}
+.empty{text-align:center;color:var(--mu);padding:40px 10px}
+.addend{display:block;width:100%;margin-top:14px;padding:14px;border-radius:14px;border:2px dashed var(--ac);color:var(--ac);font-weight:700;font-size:16px}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:7;background:var(--card);border-top:1px solid var(--bd);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;height:62px;font-size:12px;color:var(--mu);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;position:relative}
+nav button span{font-size:22px}nav button.on{color:var(--ac);font-weight:700}
+nav button em{position:absolute;top:6px;left:calc(50% + 6px);background:var(--wa);color:#fff;font-style:normal;font-size:11px;border-radius:9px;min-width:18px;padding:0 5px;line-height:18px}
+#ov{display:none;position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.5);align-items:flex-end;justify-content:center}
+#ov.on{display:flex}
+.sheet > *, .sheet .box, .sheet textarea, .sheet input, .sheet select{max-width:100%}.sheet{background:var(--bg);width:100%;max-width:640px;max-height:94vh;overflow-x:hidden;overflow-y:auto;overscroll-behavior-x:none;-webkit-overflow-scrolling:touch;border-radius:18px 18px 0 0;padding:14px 14px calc(24px + env(safe-area-inset-bottom))}
+.sh-head > *{min-width:0}.sh-head{position:sticky;top:0;z-index:4;background:var(--bg);margin:-14px -14px 8px;padding:14px 14px 8px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;box-shadow:0 1px 0 var(--bd)}
+.sh-act{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+.sv{font-size:12px;color:var(--ok);opacity:0;transition:opacity .3s;white-space:nowrap}.sv.on{opacity:1}.sv.err{color:var(--dn);font-weight:700}
+[data-close],.btn,.pri{background:var(--ac);color:var(--onac);border-radius:12px;padding:12px 16px;font-weight:700;display:inline-block;text-align:center}
+.pri{width:100%;margin-top:12px;font-size:17px}
+.dng{width:100%;margin-top:20px;border:1px solid var(--dn);color:var(--dn);border-radius:12px;padding:12px;font-weight:600}
+label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
+input[type=text],input:not([type]),input[type=search],input[type=email],input[type=password],select,textarea{width:100%;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;font-size:16px}
+.nm-in{font-weight:700;font-size:18px!important}
+.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.row>*{min-width:0}
+.hint{font-size:13px;color:var(--wa);margin-top:8px}
+#a-sug button{display:block;width:100%;text-align:left;padding:10px 12px;margin-top:6px;border-radius:10px;background:var(--card);border:1px solid var(--bd)}
+#a-sug small{color:var(--mu)}
+h4{margin:18px 0 6px;font-size:14px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em}
+.notabig{display:block;width:auto;max-width:100%;margin:10px 0 0 auto;padding:7px 12px;border-radius:10px;font-weight:650;font-size:13px;border:2px solid var(--wa);background:var(--wabg);color:var(--wa)}
+.notabig.ok{border-color:var(--ok);background:var(--okbg);color:var(--ok)}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.th{width:96px}.th img{width:96px;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--bd);display:block}.th small{display:block;font-size:11px;color:var(--mu);text-align:center}
+.pr{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px 10px;margin-top:6px}
+.pr span{flex:1;overflow-wrap:anywhere}.pr.dn span{text-decoration:line-through;color:var(--mu)}
+.ck{width:32px;height:32px;border-radius:8px;border:2px solid var(--ac);font-weight:800;color:var(--onac);flex:none}.ck.on{background:var(--ac)}
+.x{font-size:22px;color:var(--mu);width:32px;height:32px}
+.addrow{display:flex;gap:8px;margin-top:8px;min-width:0}.addrow input{flex:1 1 0;min-width:0;width:0}.addrow button{flex:0 0 auto;min-width:76px;width:auto;padding:8px 10px;white-space:nowrap;border-radius:12px;background:var(--ac);color:var(--onac);font-size:14px;font-weight:700}
+.mu{color:var(--mu);font-size:14px}
+details{margin-top:12px}summary{padding:6px 0;color:var(--mu);font-weight:600}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-top:12px}
+.box h3{margin:0 0 6px;font-size:16px}.box p{margin:6px 0;font-size:14px;color:var(--mu)}
+.box .btn{margin-top:8px;margin-right:6px}.box .sec{background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+.banner{background:var(--wabg);color:var(--wa);border-radius:12px;padding:10px 12px;margin-top:10px;font-size:13px;display:flex;gap:8px;align-items:flex-start}
+.banner button{margin-left:auto;font-size:20px;color:inherit}
+.pg{margin-top:10px;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:10px}
+.pg .hd{display:flex;justify-content:space-between;gap:8px;align-items:center}
+#toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#111;color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;z-index:40;display:none;max-width:90%}
+#vw{display:none;position:fixed;inset:0;background:#000;z-index:30;flex-direction:column}
+#vw.on{display:flex}
+#vw .bar{display:flex;gap:8px;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top)) 12px 10px}
+#vw .bar button{background:#fff2;color:#fff;border-radius:10px;padding:10px 14px;font-weight:600}
+#vw .sc{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+#vw img{width:100%;max-width:none;display:block;pointer-events:none}
+@media (pointer:fine){#vw .sc{cursor:grab;user-select:none}#vw .sc.dragging{cursor:grabbing}#vw img{user-select:none;-webkit-user-drag:none}}
+.calc{max-width:420px;margin:8px auto 0}
+.cdisp{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:12px 16px;text-align:right;-webkit-user-select:none;user-select:none;min-height:96px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}
+.cexpr{color:var(--mu);font-size:15px;min-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cnum{font-size:44px;font-weight:700;line-height:1.1;white-space:nowrap;overflow:hidden;font-variant-numeric:tabular-nums}
+.cnum.sm{font-size:32px}.cnum.xs{font-size:24px}
+.ckeys{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+.kb{height:64px;border-radius:16px;background:var(--card);border:1px solid var(--bd);font-size:24px;font-weight:600}
+.kb:active{filter:brightness(.9)}
+.kb.fn{background:var(--ac2);color:var(--tx)}
+.kb.op{background:var(--wabg);color:var(--wa);font-size:28px}
+.kb.eq{background:var(--ac);color:var(--onac);border-color:var(--ac);font-size:28px}
+#e-nt{font-size:15px;line-height:1.45;min-height:150px;white-space:pre-wrap}
+.ntrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.ntrow button{padding:10px 14px;font-size:14px;font-weight:600;border-radius:12px;border:1px solid var(--bd);background:var(--card)}
+.ntrow .ntc{margin-left:auto;font-size:12px;color:var(--mu)}
+/* Pantallas grandes (iPad, Windows): lista a la izquierda, paciente a la derecha */
+@media(min-width:900px){
+  #app{max-width:1180px}
+  #cols{display:grid;grid-template-columns:minmax(380px,460px) 1fr;gap:16px;align-items:start}
+  #pane{display:block;position:sticky;top:calc(10px + env(safe-area-inset-top))}
+  #pane:empty::before{content:'Elige un paciente de la lista o agrega uno nuevo';display:block;color:var(--mu);text-align:center;padding:70px 20px;border:2px dashed var(--bd);border-radius:18px}
+  #pane .sheet{max-width:none;max-height:calc(100vh - 100px - env(safe-area-inset-bottom));border-radius:16px;border:1px solid var(--bd);padding-bottom:20px}
+  #cols[data-v=pend],#cols[data-v=resp],#cols[data-v=calc],#cols[data-v=archivo]{grid-template-columns:1fr;max-width:640px;margin:0 auto}
+  #cols[data-v=pend] #pane,#cols[data-v=resp] #pane,#cols[data-v=calc] #pane,#cols[data-v=archivo] #pane{display:none}
+}
+.prev-text{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.9em;max-height:190px;overflow:auto;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:7px;margin:3px 0 6px}
+  .compact-details{margin:5px 0;padding:6px 9px;border:1px solid var(--bd,#ddd);border-radius:9px}
+  .compact-details summary{font-size:13px;cursor:pointer;font-weight:600}
+  #e-prev-info .prev-text{max-height:100px;overflow:auto;font-size:12px;line-height:1.35}
+  #e-prev-fotos .th{width:86px;max-width:30%;vertical-align:top}
+  #e-prev-fotos .th img{max-height:85px;object-fit:cover}
+  #calc-floating .ckeys{touch-action:manipulation}
 
-  /* ---------- Planet system ---------- */
-  .planet-wrap{
-    position:relative;
-    width:min(60vw, 60vh);
-    height:min(60vw, 60vh);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
+/* Pase compacto: navegación en una sola línea y sin saltos en iPhone */
+.visit-head{align-items:center;gap:7px;flex-wrap:nowrap;min-width:0}
+.visit-identity{flex:1 1 0;min-width:0;overflow:hidden}
+.visit-identity .nm-in{width:100%;max-width:100%;min-width:0;padding:7px 8px;font-size:17px!important}
+.visit-identity .ex{font-size:11px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.visit-actions{display:flex;align-items:center;flex:0 0 auto;gap:5px;min-width:0}
+.visit-switch{display:flex;align-items:center;gap:2px;border:1px solid var(--bd);border-radius:11px;background:var(--card);padding:2px}
+.visit-switch .ib{width:30px;height:32px;min-width:30px;min-height:32px;padding:0!important;border:0;background:transparent;border-radius:8px;font-size:22px;line-height:1}
+.visit-switch .ib:disabled{opacity:.25}
+.visit-counter{font-size:11px;color:var(--mu);white-space:nowrap;min-width:24px;text-align:center}
+.visit-done{padding:7px 9px!important;border-radius:10px!important;font-size:12px!important;min-height:36px!important;white-space:nowrap}
+.visit-head .sv{position:absolute;right:12px;top:100%;font-size:10px}
+.visit-notes .row{margin-top:8px}
+@media(max-width:365px){.visit-identity .nm-in{font-size:15px!important}.visit-switch .ib{width:27px;min-width:27px}.visit-actions{gap:3px}}
 
-  .glow{
-    position:absolute;
-    width:120%;
-    height:120%;
-    border-radius:50%;
-    background: radial-gradient(circle, rgba(167,139,250,0.25) 0%, rgba(167,139,250,0.05) 45%, transparent 70%);
-    filter: blur(8px);
-    transition: transform 4s ease-in-out, opacity 4s ease-in-out;
-  }
-
-  .ring{
-    position:absolute;
-    width:150%;
-    aspect-ratio: 1;
-    border-radius:50%;
-    border: 1px solid rgba(240,201,135,0.35);
-    transform: rotateX(75deg);
-    transition: transform 4s ease-in-out, opacity 4s ease-in-out, border-color 4s ease;
-  }
-  .ring::before{
-    content:'';
-    position:absolute;
-    top:50%; left:0;
-    width:100%; height:1px;
-    background: linear-gradient(90deg, transparent, rgba(240,201,135,0.6), transparent);
-  }
-
-  .planet{
-    position:relative;
-    width:38%;
-    aspect-ratio:1;
-    border-radius:50%;
-    background:
-      radial-gradient(circle at 35% 30%, #cdb4f7 0%, #8a6fd8 35%, #4d3893 65%, #241a52 100%);
-    box-shadow:
-      inset -10px -10px 30px rgba(0,0,0,0.5),
-      inset 8px 8px 20px rgba(255,255,255,0.15),
-      0 0 60px rgba(167,139,250,0.35);
-    transition: transform 4s cubic-bezier(0.45,0,0.55,1), box-shadow 4s ease;
-    z-index:2;
-  }
-
-  .planet::after{
-    content:'';
-    position:absolute;
-    inset:0;
-    border-radius:50%;
-    background:
-      radial-gradient(ellipse at 20% 70%, rgba(255,255,255,0.06) 0%, transparent 30%),
-      radial-gradient(ellipse at 70% 40%, rgba(0,0,0,0.15) 0%, transparent 25%);
-  }
-
-  /* breathing states */
-  .app[data-phase="inhala"] .planet{ transform: scale(1.35); }
-  .app[data-phase="inhala"] .glow{ transform: scale(1.4); opacity:1; }
-  .app[data-phase="inhala"] .ring{ transform: rotateX(75deg) scale(1.3); opacity:1; }
-
-  .app[data-phase="sostén"] .planet{ transform: scale(1.35); }
-  .app[data-phase="sostén"] .glow{ transform: scale(1.4); opacity:1; }
-  .app[data-phase="sostén"] .ring{ transform: rotateX(75deg) scale(1.3); opacity:1; }
-
-  .app[data-phase="exhala"] .planet{ transform: scale(0.85); }
-  .app[data-phase="exhala"] .glow{ transform: scale(0.9); opacity:0.5; }
-  .app[data-phase="exhala"] .ring{ transform: rotateX(75deg) scale(0.95); opacity:0.6; }
-
-  .app[data-phase="pausa"] .planet{ transform: scale(0.85); }
-  .app[data-phase="pausa"] .glow{ transform: scale(0.9); opacity:0.5; }
-  .app[data-phase="pausa"] .ring{ transform: rotateX(75deg) scale(0.95); opacity:0.6; }
-
-  /* ---------- Text ---------- */
-  .phase-text{
-    position:absolute;
-    bottom:20%;
-    text-align:center;
-    z-index:3;
-  }
-  .phase-word{
-    font-size: clamp(1.8rem, 4vw, 2.6rem);
-    letter-spacing: 0.08em;
-    font-weight:400;
-    color: var(--text-soft);
-    text-shadow: 0 0 30px rgba(167,139,250,0.5);
-    transition: opacity 0.6s ease;
-  }
-  .phase-count{
-    margin-top:0.5rem;
-    font-size:1rem;
-    color: var(--text-dim);
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-    letter-spacing:0.15em;
-  }
-
-  /* ---------- Top info ---------- */
-  .top-bar{
-    position:fixed;
-    top:2rem;
-    left:0; right:0;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    gap:1.5rem;
-    z-index:5;
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-  }
-  .cycle-count{
-    font-size:0.85rem;
-    color: var(--text-dim);
-    letter-spacing:0.1em;
-  }
-
-  /* ---------- Controls ---------- */
-  .controls{
-    position:fixed;
-    bottom:2.2rem;
-    left:0; right:0;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    gap:1rem;
-    z-index:5;
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-  }
-  button{
-    background: rgba(167,139,250,0.08);
-    border: 1px solid rgba(167,139,250,0.3);
-    color: var(--text-soft);
-    padding: 0.7rem 1.6rem;
-    border-radius: 100px;
-    font-size:0.9rem;
-    letter-spacing:0.05em;
-    cursor:pointer;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(6px);
-  }
-  button:hover{
-    background: rgba(167,139,250,0.18);
-    border-color: rgba(167,139,250,0.6);
-  }
-  button:focus-visible{
-    outline: 2px solid var(--teal);
-    outline-offset:2px;
-  }
-
-  select{
-    background: rgba(167,139,250,0.08);
-    border: 1px solid rgba(167,139,250,0.3);
-    color: var(--text-soft);
-    padding: 0.7rem 1rem;
-    border-radius: 100px;
-    font-size:0.85rem;
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-    cursor:pointer;
-  }
-  select:focus-visible{
-    outline: 2px solid var(--teal);
-  }
-
-  .hint{
-    position:fixed;
-    top: 5.5rem;
-    left:0; right:0;
-    text-align:center;
-    font-size:0.75rem;
-    color: var(--text-dim);
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-    letter-spacing:0.05em;
-    z-index:5;
-    opacity:0.7;
-  }
-
-  @media (prefers-reduced-motion: reduce){
-    .planet, .glow, .ring, .phase-word{ transition-duration: 0.3s !important; }
-  }
-
-  @media (max-width: 600px){
-    .top-bar{ top:1.2rem; gap:0.8rem; flex-wrap:wrap; }
-    .controls{ bottom:1.2rem; gap:0.6rem; }
-    button, select{ padding:0.6rem 1.1rem; font-size:0.8rem; }
-    .hint{ top:4.2rem; font-size:0.68rem; padding:0 1rem;}
-  }
+/* Buscar pacientes sin interrumpir el pase */
+.pase-search{margin-top:8px}
+.pase-search label{margin:0 0 4px;font-size:12px}
+.pase-search-line{display:flex;gap:7px;min-width:0}
+.pase-search-line input{flex:1;min-width:0;padding:9px 11px;border-radius:11px}
+.pase-search-line button{flex:none;color:var(--ac);background:var(--card);border:1px solid var(--bd);border-radius:11px;padding:7px 10px;font-size:13px;font-weight:650}
+.pase-search small{color:var(--mu);display:block;margin-top:3px;font-size:11px}
+.visit-tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:4px 0 10px}
+.visit-tabs button{background:var(--card);border:1px solid var(--bd);border-radius:11px;padding:10px;color:var(--tx);font-size:14px;font-weight:700}
+.visit-tabs button.active{background:var(--ac);color:var(--onac);border-color:var(--ac)}
+.visit-page[hidden]{display:none!important}
+.visit-note-help{font-size:12px;color:var(--mu);margin:5px 0}
+.note-tools{display:flex;gap:5px;flex-wrap:wrap;margin:7px 0}
+.note-tools button{border:1px solid var(--bd);border-radius:9px;background:var(--card);padding:7px 9px;font-size:12px;color:var(--tx)}
+.note-tools button:active{background:var(--ac2)}
+#e-nt{width:100%;min-height:230px;line-height:1.48;font-size:15px;resize:vertical}
+.visit-note-area{margin:6px 0;padding:10px;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
+.visit-note-area label{margin-top:7px}
+.visit-note-prev{max-height:110px;overflow:auto;white-space:pre-wrap;border:1px solid var(--bd);background:var(--bg);border-radius:8px;padding:8px;font-size:12px}
+@media(max-width:380px){.note-tools button{font-size:11px;padding:7px}}
 </style>
 </head>
 <body>
-
-<canvas id="stars"></canvas>
-
-<div class="app" id="app" data-phase="listo">
-
-  <div class="top-bar">
-    <span class="cycle-count" id="cycleCount">Ciclo 0</span>
-  </div>
-
-  <div class="hint" id="hint">Elige un ritmo y presiona empezar</div>
-
-  <div class="planet-wrap">
-    <div class="glow"></div>
-    <div class="ring"></div>
-    <div class="planet"></div>
-  </div>
-
-  <div class="phase-text">
-    <div class="phase-word" id="phaseWord">Listo</div>
-    <div class="phase-count" id="phaseCount"></div>
-  </div>
-
-  <div class="controls">
-    <select id="patternSelect">
-      <option value="478">4 - 7 - 8</option>
-      <option value="446">4 - 4 - 6</option>
-      <option value="4444" selected>4 - 4 - 4 - 4 (caja)</option>
-      <option value="55">5 - 5</option>
-    </select>
-    <button id="toggleBtn">Empezar</button>
-  </div>
-
-</div>
+<div id="app"><div id="cols" data-v="hoy"><div id="main"></div><div id="pane"></div></div></div>
+<nav>
+  <button data-v="hoy"><span>🩺</span>Pase</button>
+  <button data-v="pend"><span>⏳</span>Pendientes</button>
+  <button data-v="resp"><span>⚙️</span>Ajustes</button>
+</nav>
+<div id="ov"></div>
+<div id="vw"><div class="bar"><button id="v-zoom">🔍 Zoom</button><button id="v-del">🗑 Borrar</button><button id="v-x">Cerrar</button></div><div class="sc"><img id="v-img" alt="Hoja de signos"></div></div>
+<div id="toast"></div>
 
 <script>
-(function(){
-  // ---------- Starfield ----------
-  const canvas = document.getElementById('stars');
-  const ctx = canvas.getContext('2d');
-  let stars = [];
+'use strict';
+const VERSION='11.1';
+const TURNOS=[1,2,3,4,5];
+const DIAS_FOTO=7;
+const ACCESOS=['FAV','Injerto','Catéter tunelizado','Catéter temporal'];
+const DEF_TAGS=['Disfunción de catéter','Sangrado / hematoma','Sospecha de infección','Hipotensión','Hipertensión','Calambres','Náusea / vómito','Dolor torácico / arritmia','Ganancia alta','Sesión incompleta','Laboratorio','Interconsulta'];
+const DAY=864e5;
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>(window.crypto&&crypto.randomUUID)?crypto.randomUUID():'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,9);
+const now=()=>Date.now();
+const todayStr=(d=new Date())=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)};
+const fmtFecha=s=>new Date(s+'T12:00:00').toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'});
+const normExp=s=>String(s||'').trim().toUpperCase();
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
 
-  function resize(){
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    stars = [];
-    const count = Math.floor((canvas.width * canvas.height) / 6000);
-    for(let i=0;i<count;i++){
-      stars.push({
-        x: Math.random()*canvas.width,
-        y: Math.random()*canvas.height,
-        r: Math.random()*1.3 + 0.2,
-        baseAlpha: Math.random()*0.6 + 0.2,
-        twinkleSpeed: Math.random()*0.02 + 0.005,
-        phase: Math.random()*Math.PI*2
-      });
+/* ---------- Registro de errores (se ve en Ajustes) ---------- */
+function readErrs(){try{const a=JSON.parse(lsGet('errlog')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function logErr(donde,err){
+  try{
+    const a=readErrs();
+    a.push({t:Date.now(),d:donde,m:String(err&&err.message||err),s:String(err&&err.stack||'').slice(0,300)});
+    while(a.length>30)a.shift();
+    lsSet('errlog',JSON.stringify(a));
+  }catch(e){}
+  try{console.error(donde,err)}catch(e){}
+}
+window.addEventListener('error',e=>logErr('error',e.error||e.message));
+window.addEventListener('unhandledrejection',e=>logErr('promesa',e.reason));
+
+/* ---------- IndexedDB ---------- */
+let db;
+function openDB(){return new Promise((res,rej)=>{
+  const r=indexedDB.open('pase-hd',2);
+  r.onupgradeneeded=ev=>{const d=r.result;
+    if(ev.oldVersion<1){
+      d.createObjectStore('patients',{keyPath:'expediente'});
+      const e=d.createObjectStore('entries',{keyPath:'id'});e.createIndex('fecha','fecha');
+      d.createObjectStore('photos',{keyPath:'id'});
+      d.createObjectStore('meta',{keyPath:'k'});}
+    // versión 2: índice de fotos por sesión (para unir fotos que llegan antes que su sesión)
+    const ps=r.transaction.objectStore('photos');
+    if(!ps.indexNames.contains('entry'))ps.createIndex('entry','entry');};
+  r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+const rq=req=>new Promise((res,rej)=>{req.onsuccess=()=>res(req.result);req.onerror=()=>rej(req.error)});
+const store=(n,m='readonly')=>db.transaction(n,m).objectStore(n);
+const get=(n,k)=>rq(store(n).get(k));
+const putRaw=(n,v)=>rq(store(n,'readwrite').put(v));
+// Toda escritura local de pacientes, sesiones y etiquetas se avisa a la sincronización (si está activa).
+const put=(n,v,o)=>putRaw(n,v).then(r=>{if(!(o&&o.nosync)){try{SYNC.push(n,v)}catch(e){logErr('sync',e)}}return r});
+const del=(n,k)=>rq(store(n,'readwrite').delete(k));
+const all=n=>rq(store(n).getAll());
+const byDate=f=>rq(store('entries').index('fecha').getAll(f)).then(a=>a.filter(e=>!e.deleted));
+const photoIdsOf=entryId=>rq(store('photos').index('entry').getAllKeys(entryId));
+async function getTags(){const m=await get('meta','tags');return m&&Array.isArray(m.v)?m.v:DEF_TAGS.slice()}
+const setTags=a=>put('meta',{k:'tags',v:a,updatedAt:now()});
+// Pendientes: cada uno lleva su propia fecha de cambio; borrar = marcar (del) para que el borrado también se sincronice.
+const pStamp=x=>x.updatedAt||x.hechoEn||x.creado||0;
+const pAct=p=>(p&&p.pendientes||[]).filter(x=>!x.hecho&&!x.del);
+const pDone=p=>(p&&p.pendientes||[]).filter(x=>x.hecho&&!x.del);
+const patStamp=p=>p.pu||p.updatedAt||0;
+// Une dos copias de un paciente (importar archivo): perfil por fecha de perfil, pendientes uno por uno.
+function mergePat(cur,r){
+  if(!cur)return r;
+  const out={...cur};
+  if(patStamp(r)>patStamp(cur)){out.nombre=r.nombre;out.acceso=r.acceso;out.aviso=r.aviso;out.notaFija=r.notaFija;out.pu=patStamp(r)}
+  const m=new Map((cur.pendientes||[]).map(x=>[x.id,x]));
+  for(const x of r.pendientes||[]){const c=m.get(x.id);if(!c||pStamp(x)>pStamp(c))m.set(x.id,x)}
+  out.pendientes=[...m.values()];
+  out.updatedAt=Math.max(cur.updatedAt||0,r.updatedAt||0);
+  return out;
+}
+async function getFotoModo(){const m=await get('meta','foto');return m&&m.v==='normal'?'normal':'ligera'}
+
+/* ---------- Estado ---------- */
+const S={fecha:todayStr(),turno:1,view:'hoy',hoy:true,sel:null,busqueda:''};
+{const t=+lsGet('turno');if(t>=1&&t<=5)S.turno=t}
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+const standalone=window.navigator.standalone===true||matchMedia('(display-mode: standalone)').matches;
+const isWide=()=>{try{return matchMedia('(min-width:900px)').matches}catch(e){return false}};
+
+function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',2200)}
+const sillonNum=e=>{const n=parseInt(e.sillon,10);return isNaN(n)?9999:n};
+const cmpSillon=(a,b)=>sillonNum(a)-sillonNum(b)||(a.creado||0)-(b.creado||0);
+
+/* ---------- Render principal ---------- */
+async function render(){
+  if(!db)return;
+  $('#cols').dataset.v=S.view;
+  if(S.view==='hoy')await renderHoy();else if(S.view==='pend')await renderPend();else if(S.view==='calc')renderCalc();else if(S.view==='archivo')await renderArchivo();else await renderResp();
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.view));
+  try{
+    const pats=await all('patients');const n=pats.reduce((s,p)=>s+pAct(p).length,0);
+    const b=$('nav button[data-v=pend]');let em=$('em',b);
+    if(n){if(!em){em=document.createElement('em');b.appendChild(em)}em.textContent=n}else if(em)em.remove();
+  }catch(e){}
+}
+
+async function renderHoy(){
+  const [ents,pats]=await Promise.all([byDate(S.fecha),all('patients')]);
+  const P=Object.fromEntries(pats.map(x=>[x.expediente,x]));
+  const pend=ents.filter(e=>!e.nota).length;
+  const tabs=TURNOS.map(t=>{const es=ents.filter(e=>e.turno===t);const np=es.filter(e=>!e.nota).length;
+    return `<button class="tab ${t===S.turno?'on':''}" data-t="${t}">T${t}${es.length?`<i class="${np?'w':'k'}">${np||'✓'}</i>`:''}</button>`}).join('');
+  const listAll=ents.filter(e=>e.turno===S.turno).sort(cmpSillon);
+  const list=listAll;
+  const cards=list.map(e=>{
+    const pe=P[e.expediente];const open=pe?pAct(pe).length:0;
+    return `<div class="card ${e.id===S.sel?'sel':''}" data-id="${e.id}" data-exp="${esc(e.expediente.toLowerCase())}" ${S.busqueda&&!e.expediente.toLowerCase().includes(S.busqueda.toLowerCase())?'hidden':''}>
+      <div class="sil"><small>sillón</small><b>${esc(e.sillon||'–')}</b></div>
+      <div><div class="nm">${esc(pe&&pe.nombre||'(sin nombre)')}</div><div class="ex">${esc(e.expediente)}</div>
+        <div class="chips">${pe&&pe.acceso?`<span class="chip ax">${esc(pe.acceso)}</span>`:''}${pe&&pe.aviso?`<span class="chip al">⚠ ${esc(pe.aviso)}</span>`:''}${(e.tags||[]).map(g=>`<span class="chip ev">${esc(g)}</span>`).join('')}${e.fotos&&e.fotos.length?`<span class="chip">📷 ${e.fotos.length}</span>`:''}${e.notaTxt?'<span class="chip">📝 texto</span>':''}${e.asistencia==='ausente'?'<span class="chip al">No acudió</span>':''}${open?`<span class="chip w">⏳ ${open} pendiente${open>1?'s':''}</span>`:''}</div>
+        ${e.comentario?`<div class="cm">${esc(e.comentario)}</div>`:''}</div>
+      </div>`}).join('');
+  const showBanner=isIOS&&!standalone&&lsGet('bannerOff')!=='1';
+  const esHoy=S.fecha===todayStr();
+  $('#main').innerHTML=`
+    <div class="top">
+      <div class="datebar"><button class="ib" data-d="-1">‹</button>
+        <div class="d">${esc(fmtFecha(S.fecha))}<small>${esHoy?'hoy':'<a data-d="0" style="color:var(--ac);text-decoration:underline">ir a hoy</a>'} · ${ents.length} pacientes programados</small></div>
+        <button class="ib" data-d="1">›</button>
+        <button class="ib" data-batch title="Cargar lista del turno">☷ Lista</button><button class="ib pl" data-add aria-label="Agregar paciente">＋</button></div>
+      <div class="tabs">${tabs}</div>
+    <div class="pase-search"><label for="pase-q">Buscar paciente por expediente</label><div class="pase-search-line"><input type="search" id="pase-q" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" enterkeyhint="search" placeholder="Número de expediente" value="${esc(S.busqueda)}"><button type="button" id="pase-clear" aria-label="Limpiar búsqueda">Limpiar</button></div><small id="pase-search-count">${S.busqueda?`${listAll.filter(e=>e.expediente.toLowerCase().includes(S.busqueda.toLowerCase())).length} de ${listAll.length} paciente(s)`: `${listAll.length} paciente(s) en el turno`}</small></div></div>
+    ${showBanner?`<div class="banner"><div>Para que iOS no borre tus datos, instala la app: botón Compartir → <b>Agregar a pantalla de inicio</b>, y úsala siempre desde ese ícono.</div><button data-bn>×</button></div>`:''}
+    ${cards||`<div class="empty">Sin pacientes en el turno ${S.turno}.</div>`}<div id="pase-search-none" class="empty" ${!S.busqueda||listAll.some(e=>e.expediente.toLowerCase().includes(S.busqueda.toLowerCase()))?'hidden':''}>No hay coincidencias en este turno.</div><div id="pase-global-results"></div>
+    <button class="addend" data-add>＋ Agregar paciente</button>`;
+}
+
+async function renderPend(){
+  const [pats,ents]=await Promise.all([all('patients'),byDate(todayStr())]);
+  const hoy=Object.fromEntries(ents.map(e=>[e.expediente,e]));
+  const gs=pats.map(p=>({p,o:pAct(p)})).filter(g=>g.o.length)
+    .sort((a,b)=>(!!hoy[b.p.expediente])-(!!hoy[a.p.expediente])||String(a.p.nombre).localeCompare(String(b.p.nombre)));
+  const total=gs.reduce((s,g)=>s+g.o.length,0);
+  $('#main').innerHTML=`<div class="top"><div class="datebar"><div class="d">Pendientes abiertos<small>${total} en ${gs.length} paciente${gs.length===1?'':'s'}</small></div></div></div>`+
+   (gs.map(g=>{const h=hoy[g.p.expediente];
+     return `<div class="pg"><div class="hd" ${h?`data-open="${h.id}"`:''}><div><div class="nm">${esc(g.p.nombre||'(sin nombre)')}</div><div class="ex">${esc(g.p.expediente)}</div></div>${h?`<span class="chip">hoy · T${h.turno}${h.sillon?' · S'+esc(h.sillon):''}</span>`:''}</div>
+     ${g.o.map(x=>`<div class="pr"><button class="ck" data-pt="${x.id}" data-pe="${esc(g.p.expediente)}"></button><span>${esc(x.texto)}</span></div>`).join('')}</div>`}).join('')||`<div class="empty">No hay pendientes abiertos 🎉</div>`);
+}
+
+async function renderResp(){
+  const [phs,pats,ents]=await Promise.all([all('photos'),all('patients'),all('entries')]);
+  const bytes=phs.reduce((s,x)=>s+(x.blob?x.blob.size:0),0);
+  let est=null,per=null;
+  try{est=await navigator.storage.estimate()}catch(e){}
+  try{per=await navigator.storage.persisted()}catch(e){}
+  const last=await get('meta','lastBackup');
+  const tags=await getTags();
+  const modo=await getFotoModo();
+  const errs=readErrs().slice(-10).reverse();
+  const mb=n=>(n/1048576).toFixed(1)+' MB';
+  const sy=SYNC.state();
+  const hace=t=>{if(!t)return 'aún no';const s=Math.round((Date.now()-t)/1000);return s<60?'hace unos segundos':s<3600?`hace ${Math.round(s/60)} min`:`hace ${Math.round(s/3600)} h`};
+  let syHtml;
+  if(sy.status==='nocfg')syHtml='<p>No configurada: faltan los datos de Firebase en <b>firebase-config.js</b>. Mientras tanto la app funciona solo en este dispositivo.</p>';
+  else if(sy.status==='nosdk')syHtml='<p>No se pudo cargar Firebase. Abre la app con internet una vez para que se guarde en el dispositivo.</p>';
+  else if(sy.status==='error')syHtml=`<p>Error al iniciar Firebase: ${esc(sy.err)}</p>`;
+  else if(!sy.uid)syHtml=`<p>Entra con tu correo para sincronizar con tus otros dispositivos.</p>
+    <label>Correo</label><input id="sy-mail" type="email" autocomplete="username" autocapitalize="none" autocorrect="off">
+    <label>Contraseña</label><input id="sy-pass" type="password" autocomplete="current-password">
+    <p id="sy-msg" class="hint"></p><button class="btn" id="sy-login">Iniciar sesión</button>`;
+  else syHtml=`<p style="color:var(--ok);font-weight:700">● Conectado como ${esc(sy.email)}</p>
+    <p>${sy.pending?`Subiendo… ${sy.pending} cambio${sy.pending===1?'':'s'} por enviar`:'Todo al día ✓'}${navigator.onLine?'':' · sin internet (se enviará al volver)'}</p>
+    <p>Última actividad: ${hace(sy.last)}</p>
+    ${sy.err?`<p class="hint">Aviso: ${esc(sy.err)}</p>`:''}
+    <div class="tags" style="margin:8px 0"><button class="tg ${sy.syncNames?'on':''}" data-sn="${sy.syncNames?'0':'1'}">Sincronizar nombres: ${sy.syncNames?'Sí':'No'}</button><button class="tg ${sy.syncPhotos?'on':''}" data-sp="${sy.syncPhotos?'0':'1'}">Sincronizar fotos: ${sy.syncPhotos?'Sí':'No'}</button></div>
+    <p>El interruptor de nombres solo controla el campo Nombre. Los comentarios, la nota pegada, los pendientes y las etiquetas se sincronizan tal como los escribas (si pegas notas con el nombre completo del paciente, se suben así). Al volver a activar los nombres se recuperan los de la nube.</p>
+    <p>Las fotos de la hoja de signos se suben a tu cuenta de Firebase y se bajan en tus otros dispositivos; se borran a los ${DIAS_FOTO} días también en la nube. Si la hoja trae el nombre del paciente, quedará en la foto. En datos del celular, apaga las fotos.</p>
+    <button class="btn" id="sy-now">Sincronizar ahora</button><button class="btn sec" id="sy-out">Cerrar sesión</button>`;
+  $('#main').innerHTML=`<div class="top"><div class="datebar"><div class="d">Ajustes y respaldo</div></div></div>
+  <div class="box"><h3>Sincronización</h3>${syHtml}</div>
+  <div class="box"><h3>📁 Expedientes</h3><p>Consulta, corrige y revisa el historial de los pacientes.</p><button class="btn sec" id="settings-archivo">Administrar expedientes</button></div>
+  <div class="box"><h3>Etiquetas de eventos</h3>
+    <p>Son los chips que aparecen en cada paciente. Mantén la lista corta para que el pase sea rápido.</p>
+    ${tags.map((g,i)=>`<div class="tgrow"><span>${esc(g)}</span><button class="x" data-tgi="${i}" aria-label="Quitar">×</button></div>`).join('')||'<p>Sin etiquetas.</p>'}
+    <div class="addrow"><input id="tg-in" placeholder="Nueva etiqueta…" autocomplete="off"><button id="tg-add">+</button></div>
+    <button class="btn sec" id="tg-def">Restaurar lista por defecto</button></div>
+  <div class="box"><h3>Calidad de las fotos</h3>
+    <p>Ligera (recomendada): escala de grises y menor tamaño, aprox. 100-150 KB por foto. Normal: a color, aprox. 300 KB. Aplica a las fotos nuevas.</p>
+    <div class="tags"><button class="tg ${modo==='ligera'?'on':''}" data-fq="ligera">Ligera</button><button class="tg ${modo==='normal'?'on':''}" data-fq="normal">Normal</button></div></div>
+  <div class="box"><h3>Almacenamiento</h3>
+    <p>${pats.length} paciente${pats.length===1?'':'s'} guardado${pats.length===1?'':'s'} · ${ents.filter(x=>!x.deleted).length} registro${ents.filter(x=>!x.deleted).length===1?'':'s'} de sesión</p>
+    <p>${phs.length} foto${phs.length===1?'':'s'} de hoja de signos: ${mb(bytes)}. Se borran solas a los ${DIAS_FOTO} días.</p>
+    ${est&&est.quota?`<p>Uso total de la app: ${mb(est.usage||0)}</p>`:''}
+    <p>Almacenamiento persistente: ${per===true?'sí ✓':per===false?'no concedido (instala la app en la pantalla de inicio)':'no disponible'}</p>
+    <button class="btn sec" id="r-del">Borrar todas las fotos ahora</button></div>
+  <div class="box"><h3>Exportar respaldo</h3>
+    <p>Último respaldo: ${last?new Date(last.v).toLocaleString('es-MX'):'nunca'}</p>
+    <label style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type="checkbox" id="r-fot"> Incluir fotos (pesa más)</label>
+    <button class="btn" id="r-exp">Exportar archivo</button>
+    <p>Se genera un .json; en iPhone sale por el menú de compartir (Archivos, AirDrop, etc.).</p></div>
+  <div class="box"><h3>Importar respaldo</h3>
+    <p>Combina el archivo con lo que ya tienes; gana el registro más reciente.</p>
+    <label class="btn sec" for="r-file">Elegir archivo…</label><input id="r-file" type="file" accept=".json,application/json" hidden></div>
+  <div class="box"><h3>Registro de errores</h3>
+    <p>Si algo falla, aquí queda el motivo. Puedes copiarlo y mandármelo.</p>
+    ${errs.length?errs.map(x=>`<p style="font-size:12px;word-break:break-word">${esc(new Date(x.t).toLocaleTimeString('es-MX'))} · ${esc(x.d)}: ${esc(x.m)}</p>`).join(''):'<p>Sin errores registrados ✓</p>'}
+    <button class="btn sec" id="er-copy">Copiar</button><button class="btn sec" id="er-clear">Borrar</button></div>
+  <div class="box"><h3>Notas</h3><p>Los datos se guardan localmente y se sincronizan cuando Firebase está conectado. Realiza respaldos periódicos.</p><p>Versión ${VERSION}</p></div>`;
+}
+
+/* ---------- Calculadora simple (suma, resta, multiplicación, división, %, signo) ---------- */
+const C={disp:'0',acc:null,op:null,fresh:true,rep:false,eq:false,expr:''};
+const COPS={'+':'+','-':'−','*':'×','/':'÷'};
+const cFmt=n=>isFinite(n)?String(parseFloat(n.toPrecision(12))):'Error';
+function cCalc(a,op,b){return op==='+'?a+b:op==='-'?a-b:op==='*'?a*b:op==='/'?(b===0?NaN:a/b):b}
+function calcReset(){C.disp='0';C.acc=null;C.op=null;C.fresh=true;C.rep=false;C.eq=false;C.expr=''}
+function calcShow(){
+  const root=$('#calc-floating')||document;const n=$('#c-disp',root);if(!n)return;
+  n.textContent=C.disp;
+  n.className='cnum'+(C.disp.length>14?' xs':C.disp.length>9?' sm':'');
+  $('#c-expr',root).textContent=C.expr||' ';
+}
+function calcKey(k){
+  if(C.disp==='Error'&&k!=='C'){calcReset()}
+  const cur=parseFloat(C.disp);
+  if(/^[0-9]$/.test(k)){
+    if(C.fresh||C.rep){C.disp=k;C.fresh=false;C.rep=false;if(C.eq){C.expr='';C.eq=false}}
+    else if(C.disp==='0')C.disp=k;
+    else if(C.disp.replace(/[-.]/g,'').length<12)C.disp+=k;
+  }else if(k==='.'){
+    if(C.fresh||C.rep){C.disp='0.';C.fresh=false;C.rep=false;if(C.eq){C.expr='';C.eq=false}}
+    else if(!C.disp.includes('.'))C.disp+='.';
+  }else if(k==='+'||k==='-'||k==='*'||k==='/'){
+    if(C.op!==null&&C.acc!==null&&!C.fresh){
+      const r=cCalc(C.acc,C.op,cur);
+      if(!isFinite(r)){calcReset();C.disp='Error';calcShow();return}
+      C.acc=r;C.disp=cFmt(r);
+    }else if(C.op===null||C.acc===null)C.acc=cur;
+    C.op=k;C.fresh=true;C.rep=false;C.eq=false;C.expr=cFmt(C.acc)+' '+COPS[k];
+  }else if(k==='='){
+    if(C.op!==null&&C.acc!==null){
+      const r=cCalc(C.acc,C.op,cur);
+      C.expr=cFmt(C.acc)+' '+COPS[C.op]+' '+cFmt(cur)+' =';
+      C.disp=isFinite(r)?cFmt(r):'Error';
+      C.acc=null;C.op=null;C.fresh=true;C.rep=false;C.eq=true;
     }
-  }
-  window.addEventListener('resize', resize);
-  resize();
+  }else if(k==='%'){
+    const v=(C.op==='+'||C.op==='-')&&C.acc!==null?C.acc*cur/100:cur/100;
+    C.disp=cFmt(v);C.rep=true;C.fresh=false;
+  }else if(k==='pm'){
+    if(C.disp!=='0')C.disp=C.disp[0]==='-'?C.disp.slice(1):'-'+C.disp;
+  }else if(k==='B'){
+    if(!C.fresh&&!C.rep)C.disp=(C.disp.length>1&&!(C.disp.length===2&&C.disp[0]==='-'))?C.disp.slice(0,-1):'0';
+  }else if(k==='C')calcReset();
+  calcShow();
+}
+function renderCalc(){
+  const keys=[['C','fn','C'],['B','fn','⌫'],['%','fn','%'],['/','op','÷'],['7'],['8'],['9'],['*','op','×'],['4'],['5'],['6'],['-','op','−'],['1'],['2'],['3'],['+','op','+'],['pm','fn','±'],['0'],['.',' ','.'],['=','eq','=']];
+  $('#main').innerHTML=`<div class="top"><div class="datebar"><div class="d">Calculadora<small>Diferencias de peso, volumen, etc.</small></div></div></div>
+    <div class="calc"><div class="cdisp"><div class="cexpr" id="c-expr">&nbsp;</div><div class="cnum" id="c-disp">0</div></div>
+    <div class="ckeys">${keys.map(([k,c,l])=>`<button class="kb ${c||''}" data-k="${k}">${l||k}</button>`).join('')}</div>
+    <p class="mu" style="text-align:center;margin-top:12px">Ejemplo: peso actual − peso seco = ganancia de peso. También funciona con el teclado.</p></div>`;
+  calcShow();
+}
+// teclado físico (iPad con teclado, Windows): solo en la pestaña Calc y sin otra ventana abierta
+function calcFromKeyboard(ev){
+  if(S.view!=='calc'||sheetEl||$('#vw').classList.contains('on'))return false;
+  const tg=ev.target&&ev.target.tagName;if(tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT')return false;
+  if(ev.ctrlKey||ev.metaKey||ev.altKey)return false;
+  const k=ev.key;let m=null;
+  if(/^[0-9]$/.test(k))m=k;
+  else if(k==='.'||k===',')m='.';
+  else if(k==='+'||k==='-'||k==='*'||k==='/')m=k;
+  else if(k==='Enter'||k==='=')m='=';
+  else if(k==='Backspace')m='B';
+  else if(k==='Escape'||k==='Delete'||k==='c'||k==='C')m='C';
+  else if(k==='%')m='%';
+  if(m===null)return false;
+  ev.preventDefault();calcKey(m);return true;
+}
 
-  // ---------- Comets ----------
-  let comets = [];
-  let lastCometTime = 0;
-  let nextCometDelay = 2000 + Math.random()*4000;
+/* ---------- Hojas (sheets): modal en pantallas chicas, panel derecho en grandes ---------- */
+let sheetCb=null,sheetEl=null,sheetDocked=false,live=null,lastClose=Promise.resolve();
+const sheetOpen=()=>!!sheetEl;
+const settle=()=>Promise.race([lastClose,new Promise(r=>setTimeout(r,600))]);
+function refreshList(){if(sheetDocked&&sheetEl){clearTimeout(refreshList.t);refreshList.t=setTimeout(()=>render().catch(()=>{}),250)}}
+function openSheet(html){
+  if(sheetEl)closeSheet(true);
+  const docked=isWide();sheetDocked=docked;
+  const host=docked?$('#pane'):$('#ov');
+  host.innerHTML=`<div class="sheet ${docked?'docked':''}" role="dialog">${html}</div>`;
+  if(!docked){host.classList.add('on');document.body.classList.add('lock')}
+  sheetEl=host.firstChild;
+  return sheetEl;
+}
+// Cierra de inmediato; el guardado pendiente se termina en segundo plano y nunca bloquea el cierre.
+function closeSheet(skipRender){
+  if(!sheetEl)return Promise.resolve();
+  const host=sheetDocked?$('#pane'):$('#ov');
+  const f=sheetCb;sheetCb=null;sheetEl=null;live=null;S.sel=null;
+  host.classList.remove('on');host.innerHTML='';document.body.classList.remove('lock');
+  const done=Promise.resolve().then(()=>f&&f()).catch(err=>logErr('guardar',err));
+  lastClose=done;
+  if(skipRender!==true){render().catch(()=>{});done.then(()=>render()).catch(()=>{})}
+  return done;
+}
+const turnoOpts=sel=>TURNOS.map(t=>`<option value="${t}" ${t===sel?'selected':''}>Turno ${t}</option>`).join('');
 
-  function spawnComet(){
-    // enter from a random edge (mostly top/left area, like real shooting stars)
-    const fromTop = Math.random() < 0.6;
-    let x, y, angle;
-    if(fromTop){
-      x = Math.random()*canvas.width*0.8;
-      y = -20;
-      angle = (Math.random()*20 + 35) * Math.PI/180; // diagonal down-right
-    } else {
-      x = -20;
-      y = Math.random()*canvas.height*0.5;
-      angle = (Math.random()*20 + 20) * Math.PI/180;
-    }
-    const speed = Math.random()*6 + 7;
-    comets.push({
-      x, y,
-      vx: Math.cos(angle)*speed,
-      vy: Math.sin(angle)*speed,
-      life: 0,
-      maxLife: Math.random()*40 + 50,
-      trail: []
-    });
-  }
-
-  function drawComets(){
-    comets.forEach(c=>{
-      c.trail.push({x:c.x, y:c.y});
-      if(c.trail.length > 14) c.trail.shift();
-      c.x += c.vx;
-      c.y += c.vy;
-      c.life++;
-
-      // trail
-      for(let i=0;i<c.trail.length;i++){
-        const p = c.trail[i];
-        const frac = i / c.trail.length;
-        const alpha = frac * 0.5 * (1 - c.life/c.maxLife);
-        const r = frac * 1.8;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, Math.max(0.2,r), 0, Math.PI*2);
-        ctx.fillStyle = `rgba(240,201,135,${Math.max(0,alpha)})`;
-        ctx.fill();
-      }
-      // head
-      const headAlpha = Math.max(0, 1 - c.life/c.maxLife);
-      ctx.beginPath();
-      ctx.arc(c.x, c.y, 1.6, 0, Math.PI*2);
-      ctx.fillStyle = `rgba(255,244,224,${headAlpha})`;
-      ctx.shadowColor = 'rgba(240,201,135,0.9)';
-      ctx.shadowBlur = 8;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-    });
-    comets = comets.filter(c => c.life < c.maxLife && c.x < canvas.width+30 && c.y < canvas.height+30);
-  }
-
-  function drawStars(t){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    for(const s of stars){
-      const a = s.baseAlpha + Math.sin(t*s.twinkleSpeed + s.phase)*0.25;
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
-      ctx.fillStyle = `rgba(216,217,238,${Math.max(0,Math.min(1,a))})`;
-      ctx.fill();
-    }
-
-    if(t - lastCometTime > nextCometDelay){
-      spawnComet();
-      lastCometTime = t;
-      nextCometDelay = 3000 + Math.random()*5000;
-    }
-    drawComets();
-
-    requestAnimationFrame(drawStars);
-  }
-  requestAnimationFrame(drawStars);
-
-  // ---------- Breathing engine ----------
-  const app = document.getElementById('app');
-  const phaseWord = document.getElementById('phaseWord');
-  const phaseCount = document.getElementById('phaseCount');
-  const cycleCountEl = document.getElementById('cycleCount');
-  const toggleBtn = document.getElementById('toggleBtn');
-  const patternSelect = document.getElementById('patternSelect');
-  const hint = document.getElementById('hint');
-
-  // patterns: [inhala, sostén(opcional), exhala, pausa(opcional)]
-  const patterns = {
-    '478': [
-      {label:'Inhala', dur:4},
-      {label:'Sostén', dur:7},
-      {label:'Exhala', dur:8}
-    ],
-    '446': [
-      {label:'Inhala', dur:4},
-      {label:'Sostén', dur:4},
-      {label:'Exhala', dur:6}
-    ],
-    '4444': [
-      {label:'Inhala', dur:4},
-      {label:'Sostén', dur:4},
-      {label:'Exhala', dur:4},
-      {label:'Pausa', dur:4}
-    ],
-    '55': [
-      {label:'Inhala', dur:5},
-      {label:'Exhala', dur:5}
-    ]
+async function openAdd(){
+  await settle();
+  const pats=await all('patients');
+  const sh=openSheet(`<div class="sh-head"><b style="font-size:18px;padding-top:10px">Agregar paciente</b><button data-close>Cerrar</button></div>
+    <label>Buscar por número de expediente</label><input id="a-exp" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="next" autocomplete="off" autocorrect="off" placeholder="Número de expediente">
+    <label>Nombre (se completa si el expediente ya existe)</label><input id="a-nom" autocomplete="off">
+    <div id="a-sug"></div>
+    <div class="row"><div><label>Turno</label><select id="a-tur">${turnoOpts(S.turno)}</select></div>
+    <div><label>Sillón</label><input id="a-sil" inputmode="numeric" autocomplete="off"></div></div>
+    <div id="a-hint" class="hint"></div>
+    <label style="display:flex;align-items:center;gap:8px;margin:12px 0"><input id="a-rapid" type="checkbox" checked style="width:auto"> Captura rápida: continuar con el siguiente paciente</label><button class="pri" id="a-ok">Guardar paciente y sillón</button><div id="a-count" class="mu" aria-live="polite"></div>`);
+  const exp=$('#a-exp',sh),nom=$('#a-nom',sh),sug=$('#a-sug',sh),hint=$('#a-hint',sh);
+  let auto=false;
+  const upd=(src)=>{
+    const q=(src.value||'').trim().toLowerCase();
+    const k=normExp(exp.value);const known=pats.find(p=>p.expediente===k);
+    if(known){
+      if(!nom.value.trim()||auto){nom.value=known.nombre||'';auto=true}
+      const o=pAct(known);
+      hint.textContent=o.length?`Paciente conocido · ${o.length} pendiente${o.length>1?'s':''} abierto${o.length>1?'s':''}: ${o.map(x=>x.texto).join('; ')}`:'Paciente conocido';
+    }else hint.textContent='';
+    if(src===nom)auto=false;
+    const m=q?pats.filter(p=>p.expediente.toLowerCase().startsWith(q)).filter(p=>p.expediente!==k).slice(0,5):[];
+    sug.innerHTML=m.map(p=>`<button data-sg="${esc(p.expediente)}">${esc(p.nombre||'(sin nombre)')} <small>· ${esc(p.expediente)}</small></button>`).join('');
   };
+  exp.addEventListener('input',()=>upd(exp));nom.addEventListener('input',()=>upd(nom));
 
-  let running = false;
-  let cycle = 0;
-  let stepIndex = 0;
-  let secondsLeft = 0;
-  let tickTimer = null;
+  sug.addEventListener('click',ev=>{const b=ev.target.closest('[data-sg]');if(!b)return;const p=pats.find(x=>x.expediente===b.dataset.sg);exp.value=p.expediente;nom.value=p.nombre||'';auto=true;upd(exp);sug.innerHTML=''});
+  let count=0;
+  const saveQuick=async()=>{
+    const rapid=$('#a-rapid',sh).checked;
+    const result=await addEntry(exp.value,nom.value,+$('#a-tur',sh).value,$('#a-sil',sh).value,rapid);
+    if(rapid&&result==='added'){
+      count++;$('#a-count',sh).textContent=`${count} paciente${count===1?'':'s'} agregado${count===1?'':'s'} en esta captura`;
+      exp.value='';nom.value='';$('#a-sil',sh).value='';sug.innerHTML='';hint.textContent='';auto=false;exp.focus();
+    }
+  };
+  $('#a-ok',sh).onclick=()=>saveQuick().catch(err=>{logErr('agregar',err);toast('No se pudo agregar')});
+  $('#a-sil',sh).addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();saveQuick().catch(err=>logErr('agregar',err))}});
+  exp.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();$('#a-sil',sh).focus()}});
+  setTimeout(()=>exp.focus(),50);
+}
 
-  function phaseClass(label){
-    // matches CSS data-phase values (lowercase with accents)
-    const map = {
-      'Inhala':'inhala',
-      'Sostén':'sostén',
-      'Exhala':'exhala',
-      'Pausa':'pausa'
-    };
-    return map[label] || 'listo';
+async function addEntry(expRaw,nom,tur,sil,rapid=false){
+  const exp=normExp(expRaw);if(!exp){toast('Falta el expediente');return}
+  nom=nom.trim();sil=sil.trim();
+  let pat=await get('patients',exp);
+  if(!pat)pat={expediente:exp,nombre:'',pendientes:[],updatedAt:now(),pu:now()};
+  if(nom&&nom!==pat.nombre){pat.nombre=nom;pat.updatedAt=now();pat.pu=now()}
+  await put('patients',pat);
+  const ents=await byDate(S.fecha);
+  const dup=ents.find(e=>e.expediente===exp);
+  if(dup){
+    if(dup.turno===tur){toast('Ya está en este turno');if(!rapid){S.turno=tur;closeSheet();openEntry(dup.id)}return 'duplicate'}
+    if(confirm(`${pat.nombre||exp} ya está en la lista de esta fecha (turno ${dup.turno}${dup.sillon?', sillón '+dup.sillon:''}). ¿Moverlo al turno ${tur}?`)){
+      dup.turno=tur;if(sil)dup.sillon=sil;dup.updatedAt=now();await put('entries',dup);S.turno=tur;lsSet('turno',tur);
+      closeSheet();openEntry(dup.id);
+    }
+    return;
   }
+  const e={id:uid(),fecha:S.fecha,turno:tur,sillon:sil,expediente:exp,comentario:'',nota:false,fotos:[],tags:[],extras:{},creado:now(),updatedAt:now()};
+  await put('entries',e);S.turno=tur;lsSet('turno',tur);
+  if(!rapid){closeSheet();openEntry(e.id)}else{toast('Paciente agregado');render().catch(()=>{})}
+  return 'added';
+}
 
-  function startStep(steps){
-    const step = steps[stepIndex];
-    secondsLeft = step.dur;
-    app.setAttribute('data-phase', phaseClass(step.label));
-    // set transition duration to match this step's length
-    document.documentElement.style.setProperty('--dur', step.dur + 's');
-    phaseWord.style.transitionDuration = '0.6s';
-    phaseWord.textContent = step.label;
-    phaseCount.textContent = secondsLeft + 's';
+async function openEntry(id){
+  await settle();
+  const e=await get('entries',id);if(!e)return;
+  if(!e.fotos)e.fotos=[];if(!e.extras)e.extras={};if(!e.tags)e.tags=[];
+  let pat=(await get('patients',e.expediente))||{expediente:e.expediente,nombre:'',pendientes:[],updatedAt:0,pu:0};
+  // Navegación por sillón dentro de la misma fecha y turno del paciente.
+  const vecinos=(await byDate(e.fecha)).filter(x=>x.turno===e.turno).sort(cmpSillon);
+  const idx=vecinos.findIndex(x=>x.id===e.id);
+  const prevId=idx>0?vecinos[idx-1].id:null;
+  const nextId=idx>=0&&idx<vecinos.length-1?vecinos[idx+1].id:null;
+  const catalogo=await getTags();
+  const urls=[];
+  const ex=e.extras;
+  const sh=openSheet(`
+    <div class="sh-head visit-head"><div class="visit-identity"><input id="e-nom" class="nm-in" placeholder="Nombre del paciente" value="${esc(pat.nombre)}"><div class="ex">Exp. ${esc(e.expediente)} · ${esc(fmtFecha(e.fecha))}</div></div><div class="visit-actions"><div class="visit-switch"><button type="button" class="ib" id="e-prev" aria-label="Paciente anterior" title="Paciente anterior" ${prevId?'':'disabled'}>‹</button><span class="visit-counter">${idx+1}/${vecinos.length}</span><button type="button" class="ib" id="e-next" aria-label="Paciente siguiente" title="Paciente siguiente" ${nextId?'':'disabled'}>›</button></div><button type="button" class="visit-done" data-close tabindex="-1" aria-label="Cerrar valoración">Listo</button></div><span class="sv" id="e-sv"></span></div>
+    <div class="visit-tabs" role="tablist" aria-label="Secciones del paciente"><button type="button" role="tab" id="vt-pase" aria-selected="true" aria-controls="vp-pase" class="active">Pase de visita</button><button type="button" role="tab" id="vt-nota" aria-selected="false" aria-controls="vp-nota">Nota</button></div>
+    <div id="vp-pase" class="visit-page" role="tabpanel" aria-labelledby="vt-pase">
+    <div class="row"><div><label>Sillón</label><input id="e-sil" inputmode="numeric" value="${esc(e.sillon)}"></div><div style="display:flex;align-items:end"><button type="button" class="btn sec" id="e-cal">Calculadora</button></div></div>
+    <div class="box" style="margin:7px 0;padding:9px">
+      <label for="e-com"><b>Comentario de hoy</b></label>
+      <textarea id="e-com" rows="3" placeholder="Comentario de esta sesión…">${esc(e.comentario)}</textarea>
+      <div id="e-prev-info" style="margin-top:5px">Buscando última sesión…</div>
+      <button type="button" class="btn sec" id="e-reuse" style="margin-top:5px;font-size:12px">Usar comentario anterior</button>
+      <div style="margin-top:9px"><b>Pendientes por sesión</b><div id="e-pend"></div><div class="addrow"><input id="e-pin" placeholder="Nuevo pendiente de hoy…" enterkeyhint="done" autocomplete="off"><button id="e-padd">Agregar</button></div></div>
+      <div style="margin-top:10px"><b>Fotos de hoy</b><div class="thumbs" id="e-fotos"></div><label class="btn" for="e-file" style="display:inline-block;margin-top:5px">Tomar o agregar foto</label><input id="e-file" type="file" accept="image/*" hidden multiple></div>
+      <div style="margin-top:9px"><b>Fotos anteriores</b><div class="thumbs" id="e-prev-fotos">Buscando hojas recientes…</div><small class="mu">Se eliminan según el plazo de 7 días.</small></div>
+    </div>
+    <details class="compact-details"><summary>Datos del paciente y turno</summary>
+      <div class="row"><div><label>Turno</label><select id="e-tur">${turnoOpts(e.turno)}</select></div><div><label>Acceso fijo</label><select id="e-ac"><option value="">—</option>${ACCESOS.map(a=>`<option ${pat.acceso===a?'selected':''}>${esc(a)}</option>`).join('')}</select></div></div>
+      <label>Aviso fijo</label><input id="e-av" value="${esc(pat.aviso)}">
+    </details>
+    <details id="e-hist"><summary>Historial completo</summary><div id="e-hist-list">Cargando…</div></details>
+    <button class="dng" id="e-del">Quitar de la lista</button>
+    </div>
+    <div id="vp-nota" class="visit-page" role="tabpanel" aria-labelledby="vt-nota" hidden>
+      <div class="visit-note-area">
+        <b>Datos para completar la nota</b>
+        <div class="row"><div><label for="x-peso">Peso seco</label><input id="x-peso" value="${esc(ex.peso)}" placeholder="Peso seco"></div><div><label for="x-gan">Ganancia interdialítica</label><input id="x-gan" value="${esc(ex.gan)}" placeholder="Ganancia"></div></div>
+        <div class="row"><div><label for="x-ta">Tensión arterial (TA)</label><input id="x-ta" value="${esc(ex.ta)}" placeholder="TA"></div><div><label for="x-otro">Otros</label><input id="x-otro" value="${esc(ex.otro)}" placeholder="Otros datos"></div></div>
+        <p class="visit-note-help">Estos cuatro campos se guardan automáticamente en la sesión.</p>
+      </div>
+      <div class="visit-note-area">
+        <b>Nota de hemodiálisis</b>
+        <p class="visit-note-help">Escribe o pega tu nota. Inserta etiquetas donde quieras colocar los cuatro datos; al copiar, se sustituyen por los valores capturados. La plantilla queda editable para próximas sesiones.</p>
+        <div class="note-tools" id="e-placeholders"><button type="button" data-token="[PESO_SECO]">[Peso seco]</button><button type="button" data-token="[GANANCIA]">[Ganancia]</button><button type="button" data-token="[TA]">[TA]</button><button type="button" data-token="[OTROS]">[Otros]</button></div>
+        <label for="e-nt">Texto de la nota</label><textarea id="e-nt" rows="10" spellcheck="false" placeholder="Pega aquí la nota del paciente…">${esc(e.notaTxt||'')}</textarea>
+        <div class="note-tools"><button type="button" id="e-note-prior">Reutilizar nota anterior</button><button type="button" id="e-note-paste">Pegar</button><button type="button" id="e-note-copy">Copiar nota con datos</button></div>
+        <small class="mu">Sin botón de guardar: los cambios se guardan automáticamente.</small>
+      </div>
+      <div class="visit-note-area"><b>Etiquetas de eventos de la sesión</b><div class="tags" id="e-tags"></div></div>
+      <details class="compact-details"><summary>Ver nota fija del paciente</summary><div class="prev-text">${esc(pat.notaFija||'Sin nota fija')}</div></details>
+    </div>`);
+  S.sel=e.id;refreshList();
+  $('#e-cal',sh).onclick=()=>openCalcFloating();
+  loadHistory(e.expediente,e.id,sh);
+  loadPreviousInfo(e.expediente,e.id,sh);
+  loadPreviousPhotos(e.expediente,e.id,sh);
+  const q=s=>$(s,sh);
+  let tm=null;
+  let curNotaFija=pat.notaFija||'';
+  const setVisitTab=tab=>{
+    for(const x of ['pase','nota']){
+      q('#vp-'+x).hidden=x!==tab;
+      const b=q('#vt-'+x);b.classList.toggle('active',x===tab);b.setAttribute('aria-selected',String(x===tab));
+    }
+    // Volver al inicio de la ficha, no al inicio de la página de fondo.
+    sh.scrollTop=0;
+  };
+  q('#vt-pase').onclick=()=>setVisitTab('pase');
+  q('#vt-nota').onclick=()=>setVisitTab('nota');
+  const freshPat=async()=>(await get('patients',e.expediente))||{expediente:e.expediente,nombre:'',pendientes:[],updatedAt:0,pu:0};
+  const sv=ok=>{const s=q('#e-sv');if(!s)return;s.textContent=ok?'Guardado ✓':'No se pudo guardar';s.className='sv on'+(ok?'':' err');clearTimeout(sv.t);if(ok)sv.t=setTimeout(()=>s.classList.remove('on'),1500)};
+  const flushRaw=async()=>{clearTimeout(tm);tm=null;
+    e.comentario=q('#e-com').value;e.sillon=q('#e-sil').value.trim();e.notaTxt=q('#e-nt').value;
+    e.extras={peso:q('#x-peso').value,gan:q('#x-gan').value,ta:q('#x-ta').value,otro:q('#x-otro').value};
+    e.updatedAt=now();await put('entries',e);
+    // el perfil se escribe sobre la copia más reciente del paciente (por si otro dispositivo cambió pendientes)
+    const nn=q('#e-nom').value.trim(),ac=q('#e-ac').value,av=q('#e-av').value.trim(),nf=curNotaFija;
+    const cur=await freshPat();
+    if(nn!==(cur.nombre||'')||ac!==(cur.acceso||'')||av!==(cur.aviso||'')||nf!==(cur.notaFija||'')){
+      cur.nombre=nn;cur.acceso=ac;cur.aviso=av;cur.notaFija=nf;cur.pu=now();cur.updatedAt=now();await put('patients',cur)}
+    pat=cur;
+    refreshList()};
+  const mutPat=async fn=>{const cur=await freshPat();fn(cur);cur.updatedAt=now();await put('patients',cur);pat=cur};
+  const flush=async()=>{try{await flushRaw();sv(true)}catch(err){logErr('guardar',err);sv(false);throw err}};
+  const later=()=>{clearTimeout(tm);tm=setTimeout(()=>flush().catch(()=>{}),400)};
+  let changingPatient=false;
+  const goToPatient=async target=>{
+    if(!target||changingPatient)return;
+    changingPatient=true;
+    const controls=[q('#e-prev'),q('#e-next')];controls.forEach(b=>b.disabled=true);
+    try{
+      // Persistir cambios antes de cerrar; si falla, quedarse en este expediente.
+      await flush();
+      await closeSheet(true);
+      await openEntry(target);
+    }catch(err){
+      logErr('cambiar paciente',err);
+      if(sheetEl===sh){toast('No se pudo guardar. Intenta de nuevo.');controls[0].disabled=!prevId;controls[1].disabled=!nextId;}
+      else toast('No se pudo abrir el paciente');
+    }finally{changingPatient=false}
+  };
+  q('#e-prev').onclick=()=>goToPatient(prevId);
+  q('#e-next').onclick=()=>goToPatient(nextId);
 
-    // dynamically set css transition duration
-    const planet = document.querySelector('.planet');
-    const glow = document.querySelector('.glow');
-    const ring = document.querySelector('.ring');
-    [planet, glow, ring].forEach(el=>{
-      el.style.transitionDuration = step.dur + 's';
-    });
+  sheetCb=async()=>{try{await flush()}finally{urls.forEach(u=>URL.revokeObjectURL(u));const prev=q('#e-prev-fotos');if(prev&&prev._photoUrls)prev._photoUrls.forEach(u=>URL.revokeObjectURL(u))}};
+  ['#e-com','#e-sil','#e-nom','#e-av','#x-peso','#x-gan','#x-ta','#x-otro','#e-nt'].forEach(s=>q(s).addEventListener('input',later));
+  q('#e-ac').addEventListener('change',ev=>{later();ev.target.blur()});
+  // al salir de cualquier campo se guarda enseguida
+  sh.addEventListener('focusout',()=>{clearTimeout(tm);tm=setTimeout(()=>flush().catch(()=>{}),60)});
+  const drawTags=()=>{
+    const lista=[...catalogo,...e.tags.filter(g=>!catalogo.includes(g))];
+    q('#e-tags').innerHTML=lista.length?lista.map((g,i)=>`<button class="tg ${e.tags.includes(g)?'on':''}" data-tg="${i}">${esc(g)}</button>`).join(''):'<div class="mu">Sin etiquetas. Agrégalas en Ajustes.</div>';
+    q('#e-tags').dataset.lista=JSON.stringify(lista);
+  };
+  drawTags();
+  q('#e-tags').addEventListener('click',async ev=>{
+    const b=ev.target.closest('[data-tg]');if(!b)return;
+    const g=JSON.parse(q('#e-tags').dataset.lista)[+b.dataset.tg];
+    e.tags=e.tags.includes(g)?e.tags.filter(x=>x!==g):[...e.tags,g];
+    await flush().catch(()=>{});drawTags();
+  });
+  q('#e-tur').onchange=async ev=>{const v=+ev.target.value;ev.target.blur();e.turno=v;S.turno=v;lsSet('turno',v);await flush().catch(()=>{})};
+  const drawNota=()=>{}; // Se conserva el estado histórico sin mostrar controles adicionales.
+  const drawPend=()=>{
+    const row=x=>`<div class="pr ${x.hecho?'dn':''}"><button class="ck ${x.hecho?'on':''}" data-pt="${x.id}">${x.hecho?'✓':''}</button><span>${esc(x.texto)}</span><button class="x" data-px="${x.id}">×</button></div>`;
+    const open=pAct(pat),done=pDone(pat);
+    const groups=new Map();
+    for(const x of open){const d=new Date(x.creado||x.updatedAt||now()).toLocaleDateString('es-MX',{year:'numeric',month:'short',day:'numeric'});if(!groups.has(d))groups.set(d,[]);groups.get(d).push(x)}
+    q('#e-pend').innerHTML=(open.length?[...groups].map(([fecha,items])=>`<div class="mu" style="font-size:11px;margin-top:5px">Desde ${esc(fecha)}</div>${items.map(row).join('')}`).join(''):'<div class="mu">Sin pendientes abiertos</div>')+(done.length?`<details><summary>Resueltos (${done.length})</summary>${done.map(row).join('')}</details>`:'');
+  };
+  drawPend();
+  q('#e-pend').addEventListener('click',async ev=>{
+    const t=ev.target.closest('[data-pt]'),x=ev.target.closest('[data-px]');
+    if(!t&&!x)return;
+    try{
+      await mutPat(p=>{
+        if(t){const it=p.pendientes.find(z=>z.id===t.dataset.pt);if(it){it.hecho=!it.hecho;it.hechoEn=it.hecho?now():null;it.updatedAt=now()}}
+        else{const it=p.pendientes.find(z=>z.id===x.dataset.px);if(it){it.del=true;it.updatedAt=now()}}
+      });
+      sv(true);
+    }catch(err){logErr('pendiente',err);sv(false)}
+    drawPend();refreshList();
+  });
+  const addP=async()=>{const i=q('#e-pin');const t=i.value.trim();if(!t)return;
+    try{await mutPat(p=>{p.pendientes.push({id:uid(),texto:t,hecho:false,creado:now(),updatedAt:now()})});i.value='';sv(true)}catch(err){logErr('pendiente',err);sv(false)}
+    drawPend();refreshList()};
+  // Editor de nota: usa los cuatro campos como etiquetas reutilizables.
+  const noteArea=q('#e-nt');
+  q('#e-placeholders').addEventListener('click',ev=>{
+    const b=ev.target.closest('[data-token]');if(!b)return;
+    const token=b.dataset.token,from=noteArea.selectionStart,to=noteArea.selectionEnd;
+    noteArea.setRangeText(token,from,to,'end');noteArea.focus();later();
+  });
+  const filledNote=()=>{
+    const values={PESO_SECO:q('#x-peso').value,GANANCIA:q('#x-gan').value,TA:q('#x-ta').value,OTROS:q('#x-otro').value};
+    return noteArea.value.replace(/\[(PESO_SECO|GANANCIA|TA|OTROS)\]/g,(full,key)=>values[key]||'________');
+  };
+  const putClipboard=async value=>{
+    try{await navigator.clipboard.writeText(value);toast('Nota copiada')}catch(err){
+      // En entornos sin permiso de portapapeles, ofrecer copia manual.
+      window.prompt('Copia la nota:',value);
+    }
+  };
+  q('#e-note-copy').onclick=async()=>{await flush();await putClipboard(filledNote())};
+  q('#e-note-paste').onclick=async()=>{
+    try{const value=await navigator.clipboard.readText();if(!value)return;
+      if(noteArea.value.trim()&&!confirm('¿Sustituir la nota actual por el texto del portapapeles?'))return;
+      noteArea.value=value;later();toast('Texto pegado');
+    }catch(err){toast('Mantén pulsado el campo de nota y elige Pegar')}
+  };
+  q('#e-note-prior').onclick=async()=>{
+    const list=(await all('entries')).filter(x=>!x.deleted&&x.expediente===e.expediente&&x.id!==e.id&&x.notaTxt).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')||(b.creado||0)-(a.creado||0));
+    if(!list.length){toast('No hay nota anterior');return}
+    if(noteArea.value.trim()&&!confirm('¿Reemplazar el texto actual con la nota anterior?'))return;
+    noteArea.value=list[0].notaTxt;later();toast('Nota anterior reutilizada');
+  };
+  // cambios que llegan de otro dispositivo mientras esta hoja está abierta
+  live={e,flush,drawNota,
+    setE:r=>{
+      e.nota=!!r.nota;e.tags=r.tags||[];e.turno=r.turno;e.updatedAt=r.updatedAt;e.deleted=!!r.deleted;
+      if(r.fotos)e.fotos=r.fotos;
+      if(sheetEl!==sh)return;
+      drawNota();drawTags();q('#e-tur').value=String(e.turno);
+      const fo=document.activeElement;
+      if(fo!==q('#e-com')){q('#e-com').value=r.comentario||'';e.comentario=r.comentario||''}
+      if(typeof r.notaTxt==='string'&&fo!==q('#e-nt')){e.notaTxt=r.notaTxt;q('#e-nt').value=r.notaTxt}
+      if(fo!==q('#e-sil')){q('#e-sil').value=r.sillon||'';e.sillon=r.sillon||''}
+    },
+    // llegó o se borró una foto desde otro dispositivo: se vuelve a leer la lista de fotos de esta sesión
+    refreshFotos:async()=>{
+      const cur=await get('entries',e.id);if(cur)e.fotos=cur.fotos||[];
+      if(sheetEl===sh)await drawFotos();
+    },
+    setPat:p=>{
+      pat=p;if(sheetEl!==sh)return;drawPend();
+      const fo=document.activeElement;
+      if(fo!==q('#e-nom'))q('#e-nom').value=p.nombre||'';
+      if(fo!==q('#e-av'))q('#e-av').value=p.aviso||'';
+      curNotaFija=p.notaFija||'';
+      if(fo!==q('#e-ac'))q('#e-ac').value=p.acceso||'';
+    }};
+  q('#e-reuse').onclick=async()=>{
+    const entries=(await all('entries')).filter(x=>!x.deleted&&x.expediente===e.expediente&&x.id!==e.id&&x.comentario)
+      .sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')||(b.creado||0)-(a.creado||0));
+    if(!entries.length){toast('No hay comentario anterior');return}
+    const ta=q('#e-com');
+    if(ta.value.trim()&&!confirm('¿Reemplazar el comentario de hoy por el anterior?'))return;
+    ta.value=entries[0].comentario;ta.dispatchEvent(new Event('input',{bubbles:true}));
+    await flush();toast('Comentario anterior reutilizado');
+  };
+  q('#e-padd').onclick=addP;q('#e-pin').addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();addP()}});
+
+  const drawFotos=async()=>{
+    urls.splice(0).forEach(u=>URL.revokeObjectURL(u));
+    const keep=[];let html='';
+    for(const fid of e.fotos){
+      const ph=await get('photos',fid);if(!ph)continue;keep.push(fid);
+      const u=URL.createObjectURL(ph.blob);urls.push(u);
+      const left=Math.max(0,Math.ceil((ph.created+DIAS_FOTO*DAY-now())/DAY));
+      html+=`<div class="th" data-ph="${fid}" data-u="${u}"><img src="${u}" alt="Hoja de signos"><small>se borra en ${left} d</small></div>`;
+    }
+    if(keep.length!==e.fotos.length){e.fotos=keep;await flush().catch(()=>{})}
+    if(!sheetEl||sheetEl!==sh)return;
+    q('#e-fotos').innerHTML=html||'<div class="mu">Sin fotos</div>';
+  };
+  await drawFotos();
+  q('#e-fotos').addEventListener('click',ev=>{const t=ev.target.closest('[data-ph]');if(!t)return;
+    viewPhoto(t.dataset.u,async()=>{const ph=await get('photos',t.dataset.ph);await del('photos',t.dataset.ph);SYNC.dropPhoto(ph);e.fotos=e.fotos.filter(i=>i!==t.dataset.ph);await flush().catch(()=>{});await drawFotos()})});
+  q('#e-file').onchange=async ev=>{
+    const files=[...ev.target.files];ev.target.value='';if(!files.length)return;
+    toast('Guardando foto…');
+    const modo=await getFotoModo();
+    for(const f of files){try{
+      const blob=await compress(f,modo);const ph={id:uid(),blob,created:now(),entry:e.id,expediente:e.expediente};
+      await put('photos',ph);e.fotos.push(ph.id);
+      SYNC.pushPhoto(ph).then(r=>{if(r==='pesada')toast('Foto muy pesada: se queda solo en este dispositivo')}).catch(()=>{});
+    }catch(err){logErr('foto',err);toast('No se pudo procesar la foto')}}
+    await flush().catch(()=>{});await drawFotos();toast('Foto guardada');
+  };
+  q('#e-del').onclick=async()=>{
+    if(!confirm('¿Quitar a este paciente de la lista de esta fecha? Se borran sus fotos de hoja de signos; el paciente y sus pendientes se conservan.'))return;
+    sheetCb=null;clearTimeout(tm);
+    for(const fid of e.fotos){const ph=await get('photos',fid);await del('photos',fid);SYNC.dropPhoto(ph)}
+    // el borrado es una marca (deleted) para que también se sincronice a los demás dispositivos
+    e.deleted=true;e.fotos=[];e.updatedAt=now();await put('entries',e);
+    urls.forEach(u=>URL.revokeObjectURL(u));closeSheet();
+  };
+}
+
+/* ---------- Fotos ---------- */
+// Escala de grises + un poco de contraste: las hojas son texto, así pesan mucho menos y se leen igual.
+function procGris(d,contraste=1.2,pivote=140){
+  for(let i=0;i<d.length;i+=4){
+    let g=.299*d[i]+.587*d[i+1]+.114*d[i+2];
+    g=(g-pivote)*contraste+pivote;
+    g=g<0?0:g>255?255:g;
+    d[i]=d[i+1]=d[i+2]=g;
   }
+  return d;
+}
+function compress(file,modo){return new Promise((res,rej)=>{
+  const ligera=modo!=='normal';
+  const max=ligera?1280:1600,qual=ligera?.6:.72;
+  const url=URL.createObjectURL(file),img=new Image();
+  img.onload=()=>{
+    try{
+      const r=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
+      const w=Math.max(1,Math.round(img.naturalWidth*r)),h=Math.max(1,Math.round(img.naturalHeight*r));
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      const ctx=c.getContext('2d');ctx.drawImage(img,0,0,w,h);
+      if(ligera){const id=ctx.getImageData(0,0,w,h);procGris(id.data);ctx.putImageData(id,0,0)}
+      URL.revokeObjectURL(url);
+      c.toBlob(b=>b?res(b):rej(new Error('blob')),'image/jpeg',qual);
+    }catch(err){URL.revokeObjectURL(url);rej(err)}
+  };
+  img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('img'))};img.src=url;});}
 
-  function tick(){
-    const patternKey = patternSelect.value;
-    const steps = patterns[patternKey];
+let vwDel=null,vz=1;
+function setZoom(z){
+  const sc=$('#vw .sc'),im=$('#v-img');
+  z=Math.min(5,Math.max(1,z));
+  const cx=(sc.scrollLeft+sc.clientWidth/2)/(im.offsetWidth||1),cy=(sc.scrollTop+sc.clientHeight/2)/(im.offsetHeight||1);
+  vz=z;im.style.width=(z*100)+'%';
+  sc.scrollLeft=cx*im.offsetWidth-sc.clientWidth/2;sc.scrollTop=cy*im.offsetHeight-sc.clientHeight/2;
+  $('#v-zoom').textContent='🔍 '+(Math.round(z*10)/10)+'×';
+}
+function viewPhoto(url,onDelete){
+  $('#v-img').src=url;$('#vw').classList.add('on');vwDel=onDelete;vz=1;$('#v-img').style.width='100%';$('#vw .sc').scrollTo(0,0);setZoom(1);
+}
+$('#v-x').onclick=()=>{$('#vw').classList.remove('on');$('#v-img').removeAttribute('src');vwDel=null};
+$('#v-zoom').onclick=()=>setZoom(vz>=3.5?1:Math.floor(vz)+1);
+{ // zoom con pellizco solo dentro del visor de fotos
+  const sc=$('#vw .sc');let d0=0,z0=1;
+  const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+  sc.addEventListener('touchstart',e=>{if(e.touches.length===2){d0=dist(e.touches);z0=vz}},{passive:true});
+  sc.addEventListener('touchmove',e=>{if(e.touches.length===2&&d0){e.preventDefault();setZoom(z0*dist(e.touches)/d0)}},{passive:false});
+  sc.addEventListener('touchend',()=>{d0=0});
+  // En móvil, un dedo desplaza la foto ampliada sin mover la pantalla de fondo.
+  let pan=null;
+  sc.addEventListener('touchstart',e=>{
+    if(e.touches.length===1&&vz>1.01)pan={x:e.touches[0].clientX,y:e.touches[0].clientY,l:sc.scrollLeft,t:sc.scrollTop};
+    else pan=null;
+  },{passive:true});
+  sc.addEventListener('touchmove',e=>{
+    if(e.touches.length!==1||!pan||vz<=1.01)return;
+    e.preventDefault();
+    sc.scrollLeft=pan.l+pan.x-e.touches[0].clientX;
+    sc.scrollTop=pan.t+pan.y-e.touches[0].clientY;
+  },{passive:false});
+  sc.addEventListener('touchend',()=>{pan=null});
+  sc.addEventListener('touchcancel',()=>{pan=null});
+}
+// Escritorio: rueda para ampliar alrededor del cursor y arrastre para desplazar.
+{
+ const sc=$('#vw .sc'),im=$('#v-img');let drag=null;
+ sc.addEventListener('wheel',e=>{
+   if(!$('#vw').classList.contains('on'))return;
+   e.preventDefault();
+   const rect=sc.getBoundingClientRect();
+   const px=e.clientX-rect.left,py=e.clientY-rect.top;
+   const oldW=im.offsetWidth||1,oldH=im.offsetHeight||1;
+   const rx=(sc.scrollLeft+px)/oldW,ry=(sc.scrollTop+py)/oldH;
+   const next=Math.min(5,Math.max(1,vz*Math.exp(-e.deltaY*0.0015)));
+   vz=next;im.style.width=(next*100)+'%';
+   sc.scrollLeft=rx*im.offsetWidth-px;sc.scrollTop=ry*im.offsetHeight-py;
+   $('#v-zoom').textContent='Zoom '+(Math.round(next*10)/10)+'×';
+ },{passive:false});
+ sc.addEventListener('pointerdown',e=>{
+   if(e.pointerType==='touch'||e.button!==0||!$('#vw').classList.contains('on'))return;
+   drag={id:e.pointerId,x:e.clientX,y:e.clientY,left:sc.scrollLeft,top:sc.scrollTop};
+   sc.setPointerCapture(e.pointerId);sc.classList.add('dragging');e.preventDefault();
+ });
+ sc.addEventListener('pointermove',e=>{
+   if(!drag||e.pointerId!==drag.id)return;
+   sc.scrollLeft=drag.left-(e.clientX-drag.x);sc.scrollTop=drag.top-(e.clientY-drag.y);
+ });
+ const stop=e=>{if(drag&&e.pointerId===drag.id){drag=null;sc.classList.remove('dragging')}};
+ sc.addEventListener('pointerup',stop);sc.addEventListener('pointercancel',stop);sc.addEventListener('lostpointercapture',()=>{drag=null;sc.classList.remove('dragging')});
+ im.addEventListener('dragstart',e=>e.preventDefault());
+}
+// evita que el pellizco o el doble toque desajusten el tamaño de la app (Safari/iOS)
+['gesturestart','gesturechange','gestureend'].forEach(g=>document.addEventListener(g,e=>e.preventDefault()));
+$('#v-del').onclick=async()=>{if(!vwDel||!confirm('¿Borrar esta foto?'))return;const f=vwDel;$('#v-x').onclick();await f()};
 
-    secondsLeft -= 1;
-    if(secondsLeft <= 0){
-      stepIndex++;
-      if(stepIndex >= steps.length){
-        stepIndex = 0;
-        cycle++;
-        cycleCountEl.textContent = 'Ciclo ' + cycle;
+async function purge(){
+  const lim=now()-DIAS_FOTO*DAY;let n=0;const gone=new Set();
+  for(const p of await all('photos'))if(p.created<lim){await del('photos',p.id);gone.add(p.id);n++}
+  if(gone.size)for(const e of await all('entries')){
+    const k=(e.fotos||[]).filter(i=>!gone.has(i));
+    // las fotos son locales: limpiar la lista no cuenta como cambio para la sincronización
+    if(k.length!==(e.fotos||[]).length){e.fotos=k;await put('entries',e,{nosync:true})}}
+  return n;
+}
+
+/* ---------- Respaldo ---------- */
+const blobToData=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(b)});
+async function exportar(conFotos){
+  const data={app:'pase-hd',version:1,exportado:now(),tags:await getTags(),patients:await all('patients'),entries:await all('entries'),photos:[]};
+  if(conFotos)for(const ph of await all('photos'))data.photos.push({id:ph.id,created:ph.created,entry:ph.entry,expediente:ph.expediente,data:await blobToData(ph.blob)});
+  const name=`pase-hd-${todayStr()}.json`;
+  const file=new File([JSON.stringify(data)],name,{type:'application/json'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:name});await put('meta',{k:'lastBackup',v:now()});return true}
+    catch(err){if(err&&err.name==='AbortError')return false}
+  }
+  const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
+  await put('meta',{k:'lastBackup',v:now()});return true;
+}
+async function importar(file){
+  const d=JSON.parse(await file.text());if(!d||d.app!=='pase-hd')throw new Error('Archivo no válido');
+  let a=0,b=0;
+  for(const r of d.patients||[]){const cur=await get('patients',r.expediente);const m=mergePat(cur,r);
+    if(!cur||JSON.stringify(m)!==JSON.stringify(cur)){await put('patients',m);a++}}
+  for(const r of d.entries||[]){const cur=await get('entries',r.id);
+    if(!cur||(r.updatedAt||0)>(cur.updatedAt||0)){await put('entries',{...r,fotos:cur&&cur.fotos?cur.fotos:(r.fotos||[])});b++}}
+  if(Array.isArray(d.tags)){const m=await getTags();for(const g of d.tags)if(!m.includes(g))m.push(g);await setTags(m)}
+  for(const ph of d.photos||[])if(!(await get('photos',ph.id))){
+    const blob=await (await fetch(ph.data)).blob();await put('photos',{id:ph.id,blob,created:ph.created,entry:ph.entry,expediente:ph.expediente})}
+  await purge();return {a,b};
+}
+
+/* ---------- Eventos globales ---------- */
+// "Listo"/"Cerrar" también responde al soltar el mouse o el lápiz (iPad con mouse), por si el clic no llega.
+let pdTarget=null;
+document.addEventListener('pointerdown',ev=>{pdTarget=ev.target.closest?ev.target.closest('[data-close]'):null},true);
+document.addEventListener('pointerup',ev=>{
+  if(ev.pointerType==='touch')return;
+  const c=ev.target.closest?ev.target.closest('[data-close]'):null;
+  if(c&&c===pdTarget&&sheetEl){closeSheet()}
+},true);
+document.addEventListener('keydown',ev=>{
+  if(calcFromKeyboard(ev))return;
+  if(ev.key==='Enter'&&ev.target&&ev.target.id==='sy-pass'){ev.preventDefault();const b=$('#sy-login');if(b)b.click();return}
+  if(ev.key==='Escape'){
+    if($('#vw').classList.contains('on')){$('#v-x').onclick();return}
+    if(sheetEl){ev.preventDefault();closeSheet()}
+    return;
+  }
+  if(ev.key==='Tab'&&sheetEl&&!sheetDocked){ // el Tab no se escapa de la hoja
+    const fs=[...sheetEl.querySelectorAll('button:not([tabindex="-1"]),input:not([type=hidden]):not([hidden]),select,textarea,summary')].filter(x=>!x.disabled&&x.offsetParent!==null);
+    if(!fs.length)return;
+    const first=fs[0],last=fs[fs.length-1],act=document.activeElement;
+    if(!sheetEl.contains(act)){ev.preventDefault();first.focus()}
+    else if(ev.shiftKey&&act===first){ev.preventDefault();last.focus()}
+    else if(!ev.shiftKey&&act===last){ev.preventDefault();first.focus()}
+  }
+});
+
+/* Extensiones de gestión clínica: historial y lista anticipada */
+async function renderArchivo(){
+ const pats=(await all('patients')).filter(p=>!p.deleted).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+ $('#main').innerHTML=`<div class="top"><div class="datebar"><div class="d">Expedientes<small>${pats.length} pacientes guardados</small></div></div></div><div class="box"><button class="btn sec" id="archivo-volver" style="margin-bottom:12px">← Volver a Ajustes</button><input id="ar-q" placeholder="Buscar número de expediente" inputmode="numeric" pattern="[0-9]*" autocomplete="off"><div id="ar-list"></div></div>`;
+ const draw=()=>{const q=($('#ar-q').value||'').toLowerCase();$('#ar-list').innerHTML=pats.filter(p=>p.expediente.toLowerCase().includes(q)).map(p=>`<div class="tgrow"><span><b>${esc(p.nombre||'(sin nombre)')}</b><small> · ${esc(p.expediente)}</small></span><button data-profile="${esc(p.expediente)}">Editar / historial</button></div>`).join('')||'<p>No hay coincidencias</p>'};$('#ar-q').oninput=draw;draw();
+}
+async function loadPreviousInfo(exp,current,host){
+ const target=$('#e-prev-info',host);if(!target)return;
+ const entries=(await all('entries')).filter(x=>!x.deleted&&x.expediente===exp&&x.id!==current).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')||(b.creado||0)-(a.creado||0));
+ const prev=entries[0];
+ if(!prev){target.innerHTML='<div class="mu">Sin sesión anterior registrada.</div>';return}
+ const note=prev.notaTxt||'',comment=prev.comentario||'';
+ target.innerHTML=`<div style="font-size:.9em"><b>Última sesión · ${esc(prev.fecha)} · sillón ${esc(prev.sillon||'—')}</b></div><label>Comentario anterior</label><div class="prev-text">${comment?esc(comment):'<span class="mu">Sin comentario anterior</span>'}</div>${note?`<details><summary>Nota clínica anterior</summary><div class="prev-text">${esc(note)}</div></details>`:''}`;
+}
+async function loadPreviousPhotos(exp,current,host){
+ const target=$('#e-prev-fotos',host);if(!target)return;
+ const entries=(await all('entries')).filter(x=>!x.deleted&&x.expediente===exp&&x.id!==current).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+ const photos=await all('photos');const limit=now()-DIAS_FOTO*DAY;
+ const items=[];
+ for(const entry of entries){for(const ph of photos){if(ph.entry===entry.id&&ph.created>=limit&&ph.blob)items.push({entry,ph})}}
+ if(!items.length){target.textContent='No hay hojas anteriores disponibles dentro de los últimos 7 días.';return}
+ const urls=[];target.innerHTML='';
+ for(const {entry,ph} of items){const u=URL.createObjectURL(ph.blob);urls.push(u);const b=document.createElement('button');b.type='button';b.className='th';b.style.margin='5px';const img=document.createElement('img');img.src=u;img.alt='Hoja de enfermería anterior';const small=document.createElement('small');small.textContent=entry.fecha+' · Turno '+entry.turno;b.append(img,small);b.onclick=()=>viewPhoto(u,()=>{});target.appendChild(b)}
+ // Conservar las URLs mientras la ficha está abierta; liberar al cerrar.
+ const old=sheetCb; // La limpieza se gestiona por cierre de ficha en la rutina principal.
+ target._photoUrls=urls;
+}
+async function loadHistory(exp,current,host){
+ const target=$('#e-hist-list',host);if(!target)return;
+ const entries=(await all('entries')).filter(x=>!x.deleted&&x.expediente===exp&&x.id!==current).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+ target.innerHTML=entries.length?entries.map(x=>`<div class="box" style="margin:8px 0"><b>${esc(x.fecha)} · Turno ${esc(x.turno)}</b><p>Asistencia: ${esc(x.asistencia||'sin registrar')} · Nota ${x.nota?'hecha':'pendiente'}</p>${x.comentario?`<p>${esc(x.comentario)}</p>`:''}${x.notaTxt?`<details><summary>Ver nota previa</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(x.notaTxt)}</pre></details>`:''}<button type="button" data-hopen="${esc(x.id)}">Abrir sesión</button>${(x.fotos||[]).length?`<p>📷 ${x.fotos.length} hoja(s) registradas (pueden caducar a los 7 días)</p>`:''}</div>`).join(''):'<p>No hay sesiones anteriores.</p>';
+ target.onclick=ev=>{const b=ev.target.closest('[data-hopen]');if(b)openEntry(b.dataset.hopen)};
+}
+async function openProfile(exp){
+ const p=await get('patients',exp);if(!p)return;
+ const sh=openSheet(`<div class="sh-head"><b>Editar expediente</b><button data-close>Cerrar</button></div><label>Expediente (identificador)</label><input id="pr-exp" value="${esc(p.expediente)}" readonly><p class="mu">El número de expediente no se cambia aquí para evitar separar notas y sesiones del paciente.</p><label>Nombre</label><input id="pr-nom" value="${esc(p.nombre)}"><label>Acceso vascular</label><select id="pr-ac"><option value="">—</option>${ACCESOS.map(a=>`<option ${p.acceso===a?'selected':''}>${esc(a)}</option>`).join('')}</select><label>Aviso fijo</label><input id="pr-av" value="${esc(p.aviso)}"><label>Nota fija</label><textarea id="pr-fija" rows="4">${esc(p.notaFija)}</textarea><button class="btn" id="pr-save">Guardar cambios</button><h4>Historial</h4><div id="e-hist-list"></div><button class="dng" id="pr-del">Eliminar expediente</button>`);
+ loadHistory(exp,null,sh);
+ $('#pr-save',sh).onclick=async()=>{const cur=await get('patients',exp);cur.nombre=$('#pr-nom',sh).value.trim();cur.acceso=$('#pr-ac',sh).value;cur.aviso=$('#pr-av',sh).value.trim();cur.notaFija=$('#pr-fija',sh).value;cur.updatedAt=now();cur.pu=now();await put('patients',cur);toast('Expediente actualizado');closeSheet()};
+ $('#pr-del',sh).onclick=async()=>{const entries=(await all('entries')).filter(e=>e.expediente===exp&&!e.deleted);if(entries.length){alert(`Este expediente tiene ${entries.length} sesiones. Por seguridad no se elimina junto con sus notas. Primero debe resolverse la conservación de su historial.`);return}if(!confirm('¿Eliminar este expediente sin sesiones? Esta acción no se puede deshacer.'))return;const cur=await get('patients',exp);cur.deleted=true;cur.updatedAt=now();cur.pu=now();await put('patients',cur);closeSheet();toast('Expediente marcado como eliminado; comprueba la sincronización.')};
+}
+async function openBatch(){
+ const sh=openSheet(`<div class="sh-head"><b>Cargar lista de hemodiálisis</b><button data-close>Cerrar</button></div><p>Una línea por paciente: expediente, nombre, sillón. Se pueden usar tabulaciones, comas o punto y coma. Los pacientes quedarán como asistencia por confirmar.</p><label>Fecha de sesión</label><input id="ba-date" type="date" value="${esc(S.fecha)}"><label>Turno</label><select id="ba-turn">${turnoOpts(S.turno)}</select><textarea id="ba-lines" rows="12" placeholder="12345, María Pérez, 1&#10;67890, Juan López, 2"></textarea><button class="btn" id="ba-go">Cargar pacientes</button><p id="ba-msg"></p>`);
+ $('#ba-go',sh).onclick=async()=>{const fecha=$('#ba-date',sh).value,turno=+$('#ba-turn',sh).value;const lines=$('#ba-lines',sh).value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(!fecha||!lines.length){toast('Indica fecha y pacientes');return}const old=await byDate(fecha);let added=0,skipped=0;for(const line of lines){const parts=line.includes('\t')?line.split('\t'):line.split(/[;,]/);const exp=normExp(parts[0]);if(!exp){skipped++;continue}if(old.some(e=>e.expediente===exp)){skipped++;continue}let p=await get('patients',exp);if(!p)p={expediente:exp,nombre:(parts[1]||'').trim(),pendientes:[],updatedAt:now(),pu:now()};else if(!p.nombre&&parts[1]){p.nombre=parts[1].trim();p.updatedAt=now()}await put('patients',p);const e={id:uid(),fecha,turno,sillon:(parts[2]||'').trim(),expediente:exp,comentario:'',nota:false,notaTxt:'',asistencia:'pendiente',fotos:[],tags:[],extras:{},creado:now(),updatedAt:now()};await put('entries',e);old.push(e);added++}S.fecha=fecha;S.turno=turno;closeSheet();toast(`${added} agregados; ${skipped} omitidos`)};
+}
+function openCalcFloating(){
+ const old=$('#calc-floating');if(old){old.remove();return}
+ if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+ const overlay=document.createElement('div');overlay.id='calc-floating';
+ overlay.style.cssText='position:fixed;inset:0;z-index:99999;background:#0009;display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box;overscroll-behavior:contain';
+ const keys=[['C','C'],['B','⌫'],['%','%'],['/','÷'],['7','7'],['8','8'],['9','9'],['*','×'],['4','4'],['5','5'],['6','6'],['-','−'],['1','1'],['2','2'],['3','3'],['+','+'],['pm','±'],['0','0'],['.','.'],['=','=']];
+ overlay.innerHTML=`<div style="width:min(350px,100%);max-height:90%;overflow:auto;background:var(--bg);color:var(--tx);border-radius:18px;padding:14px;box-sizing:border-box;box-shadow:0 8px 35px #0006"><div class="sh-head"><b>Calculadora</b><button type="button" id="cf-close">Cerrar</button></div><div class="cdisp"><div id="c-expr" class="cexpr"></div><div id="c-disp" class="cnum">0</div></div><div class="ckeys">${keys.map(([k,l])=>`<button type="button" class="kb" style="touch-action:manipulation" data-k="${k}">${l}</button>`).join('')}</div></div>`;
+ document.body.appendChild(overlay);calcReset();calcShow();
+ $('#cf-close',overlay).onclick=()=>overlay.remove();overlay.addEventListener('click',ev=>{if(ev.target===overlay)overlay.remove()});
+}
+
+document.addEventListener('input',ev=>{
+  if(ev.target&&ev.target.id==='pase-q'){
+    S.busqueda=ev.target.value.trim();
+    // Direct DOM filter avoids losing keyboard focus on iPhone.
+    const cards=[...document.querySelectorAll('#main .card[data-id]')];
+    const q=S.busqueda.toLowerCase();
+    cards.forEach(card=>{card.hidden=!card.dataset.exp.includes(q)});
+    const count=cards.filter(card=>!card.hidden).length;
+    const hint=$('#pase-search-count');if(hint)hint.textContent=q?`${count} de ${cards.length} paciente(s)`:`${cards.length} paciente(s) en el turno`;
+    const none=$('#pase-search-none');if(none)none.hidden=!q||count>0;
+    const target=$('#pase-global-results');if(!target)return;
+    clearTimeout(window._paseSearchTimer);
+    if(q.length<2){target.innerHTML='';return}
+    window._paseSearchTimer=setTimeout(async()=>{
+      try{
+        const [pats,dated]=await Promise.all([all('patients'),byDate(S.fecha)]);
+        if(S.busqueda.toLowerCase()!==q||!target.isConnected)return;
+        const selected=new Set(cards.map(c=>c.dataset.exp));
+        const matches=pats.filter(p=>!p.deleted&&p.expediente.toLowerCase().includes(q)&&!selected.has(p.expediente.toLowerCase())).slice(0,8);
+        target.innerHTML=matches.length?`<div class="box"><b>Otros expedientes</b><p class="mu">Pacientes fuera de este turno. Puedes consultar su historial sin agregar una sesión.</p>${matches.map(p=>{
+          const e=dated.find(x=>x.expediente===p.expediente);
+          return `<div class="tgrow"><span><b>${esc(p.nombre||'(sin nombre)')}</b><small> · ${esc(p.expediente)}</small></span><button type="button" ${e?`data-open="${esc(e.id)}"`:`data-profile="${esc(p.expediente)}"`}>${e?'Abrir':'Historial'}</button></div>`;
+        }).join('')}</div>`:'';
+      }catch(err){logErr('buscador',err)}
+    },160);
+  }
+});
+document.addEventListener('click',async ev=>{
+  const t=ev.target;if(!t.closest)return;
+  if(t.id==='pase-clear'){S.busqueda='';const q=$('#pase-q');if(q){q.value='';q.dispatchEvent(new Event('input',{bubbles:true}));q.focus()}return;}
+  const nav=t.closest('nav button');
+  if(nav){if(sheetEl&&sheetDocked)closeSheet(true);S.view=nav.dataset.v;render();window.scrollTo(0,0);return}
+  const kc=t.closest('[data-k]');if(kc){calcKey(kc.dataset.k);return}
+  if(t.id==='archivo-volver'){S.view='resp';await render();return}
+  if(t.id==='settings-archivo'){S.view='archivo';await render();window.scrollTo(0,0);return}
+  if(t.closest('[data-add]')){openAdd();return}
+  if(t.closest('[data-batch]')){openBatch();return}
+  const profile=t.closest('[data-profile]');if(profile){openProfile(profile.dataset.profile);return}
+  if(t.closest('[data-close]')){closeSheet();return}
+  if(t.id==='ov'){closeSheet();return}
+  if(t.closest('[data-bn]')){lsSet('bannerOff','1');render();return}
+  const dn=t.closest('[data-d]');
+  if(dn&&S.view==='hoy'){const v=+dn.dataset.d;
+    if(sheetEl&&sheetDocked)closeSheet(true);
+    if(v===0)S.fecha=todayStr();else{const d=new Date(S.fecha+'T12:00:00');d.setDate(d.getDate()+v);S.fecha=todayStr(d)}
+    S.hoy=S.fecha===todayStr();render();return}
+  const tab=t.closest('[data-t]');if(tab){S.turno=+tab.dataset.t;lsSet('turno',S.turno);render();return}
+  const nt=t.closest('[data-nota]');
+  if(nt){
+    if(live&&live.e.id===nt.dataset.nota){live.e.nota=!live.e.nota;live.drawNota();await live.flush().catch(()=>{});render();return}
+    const e=await get('entries',nt.dataset.nota);e.nota=!e.nota;e.updatedAt=now();await put('entries',e);render();return}
+  const pt=t.closest('[data-pt][data-pe]');
+  if(pt){const p=await get('patients',pt.dataset.pe);const x=p.pendientes.find(z=>z.id===pt.dataset.pt);x.hecho=true;x.hechoEn=now();x.updatedAt=now();p.updatedAt=now();await put('patients',p);render();toast('Pendiente resuelto');return}
+  const op=t.closest('[data-open]');
+  if(op){
+    const e=await get('entries',op.dataset.open);
+    if(e&&isWide()&&S.view!=='hoy'){S.view='hoy';S.fecha=e.fecha;S.turno=e.turno;S.hoy=e.fecha===todayStr();await render()}
+    openEntry(op.dataset.open);return}
+  const card=t.closest('.card[data-id]');if(card){openEntry(card.dataset.id);return}
+  const tgd=t.closest('[data-tgi]');
+  if(tgd){const a=await getTags();a.splice(+tgd.dataset.tgi,1);await setTags(a);render();return}
+  if(t.id==='tg-add'){const v=$('#tg-in').value.trim();if(!v)return;const a=await getTags();if(!a.includes(v)){a.push(v);await setTags(a)}render();return}
+  if(t.id==='tg-def'){if(confirm('¿Restaurar la lista de etiquetas por defecto?')){await setTags(DEF_TAGS.slice());render()}return}
+  if(t.id==='sy-login'){
+    const m=$('#sy-mail').value.trim(),p=$('#sy-pass').value,msg=$('#sy-msg');
+    if(!m||!p){msg.textContent='Escribe tu correo y contraseña';return}
+    msg.textContent='Entrando…';
+    try{await SYNC.login(m,p)}catch(err){msg.textContent=err.message}
+    return}
+  if(t.id==='sy-out'){if(confirm('¿Cerrar sesión? Tus datos se quedan en este dispositivo.')){await SYNC.logout();render()}return}
+  if(t.id==='sy-now'){await SYNC.syncNow();toast('Sincronizando…');render();return}
+  const sn=t.closest('[data-sn]');if(sn){await SYNC.setNames(sn.dataset.sn==='1');render();return}
+  const sp=t.closest('[data-sp]');if(sp){await SYNC.setPhotos(sp.dataset.sp==='1');render();return}
+  const fq=t.closest('[data-fq]');
+  if(fq){await put('meta',{k:'foto',v:fq.dataset.fq});render();toast('Calidad: '+(fq.dataset.fq==='normal'?'normal':'ligera'));return}
+  if(t.id==='er-copy'){const txt=JSON.stringify(readErrs(),null,1);
+    try{await navigator.clipboard.writeText(txt);toast('Copiado')}catch(err){prompt('Copia este texto:',txt)}return}
+  if(t.id==='er-clear'){lsSet('errlog','[]');render();return}
+  if(t.id==='r-del'){if(confirm('¿Borrar TODAS las fotos de hojas de signos? Si la sincronización de fotos está activa, también se borran en tus otros dispositivos.')){
+    for(const p of await all('photos')){await del('photos',p.id);SYNC.dropPhoto(p)}
+    for(const e of await all('entries'))if(e.fotos&&e.fotos.length){e.fotos=[];e.updatedAt=now();await put('entries',e)}
+    toast('Fotos borradas');render()}return}
+  if(t.id==='r-exp'){const ok=await exportar($('#r-fot').checked);if(ok){toast('Respaldo listo');render()}return}
+});
+document.addEventListener('change',async ev=>{
+  if(ev.target.id==='r-file'){const f=ev.target.files[0];ev.target.value='';if(!f)return;
+    try{const r=await importar(f);toast(`Importado: ${r.a} pacientes, ${r.b} registros`);render()}catch(err){logErr('importar',err);alert('No se pudo importar: '+err.message)}}
+});
+
+/* ---------- Sincronización con Firebase (opcional) ----------
+   Cada dispositivo sigue guardando todo local. Aquí solo se suben los cambios y se bajan los de los demás.
+   Cada registro (paciente, pendiente, sesión, etiquetas) lleva updatedAt: gana el cambio más reciente.
+   Las fotos NO se sincronizan (viven solo en el dispositivo donde se tomaron). */
+const SYNC=(()=>{
+  const st={uid:null,email:'',status:'init',pending:0,denied:0,last:0,err:'',syncNames:true,syncPhotos:true,remote:{},unsubs:[],chain:Promise.resolve(),first:{},forceNames:false,fs:null,auth:null};
+  const DIAS_ENT=36500; // Historial completo: no limitar la sincronización a 45 días
+  const cfgOk=()=>{try{const c=window.FIREBASE_CONFIG;return !!(c&&c.apiKey&&c.projectId&&!/PEGA_AQUI/.test(JSON.stringify(c)))}catch(e){return false}};
+  const typing=()=>{const a=document.activeElement;return !!(a&&/^sy-/.test(a.id||''))};
+  const changed=()=>{clearTimeout(changed.t);changed.t=setTimeout(()=>{try{if(S.view==='resp'&&!sheetEl&&!typing())render().catch(()=>{})}catch(e){}},200)};
+  const ref=(coll,id)=>{const c=st.fs.collection('users').doc(st.uid).collection(coll);return id==null?c:c.doc(coll==='meta'?id:encodeURIComponent(id))};
+  const enq=fn=>{st.chain=st.chain.then(fn).catch(e=>logErr('sync',e));return st.chain};
+  const fail=(err,n=1)=>{if(err&&err.code==='permission-denied')st.denied+=n;else logErr('subir',err)};
+
+  /* --- registros --- */
+  const recPat=p=>{const r={expediente:p.expediente,acceso:p.acceso||'',aviso:p.aviso||'',updatedAt:patStamp(p)};if(st.syncNames)r.nombre=p.nombre||'';return r};
+  const recPend=(p,x)=>({id:x.id,expediente:p.expediente,texto:x.texto,hecho:!!x.hecho,hechoEn:x.hechoEn||null,creado:x.creado||0,del:!!x.del,updatedAt:pStamp(x)});
+  const recEnt=e=>{const r={...e};delete r.fotos;r.deleted=!!e.deleted;r.updatedAt=e.updatedAt||0;return r};
+  // Fotos: ya vienen comprimidas (ligeras ~100-150 KB); van dentro del documento como texto base64.
+  // Un documento de Firestore admite ~1 MB, por eso se descarta lo que pase de este límite.
+  const MAX_FOTO=950000;
+  async function recPhoto(ph){
+    const data=await blobToData(ph.blob);
+    if(data.length>MAX_FOTO)return null;
+    return {id:ph.id,entry:ph.entry||'',expediente:ph.expediente||'',created:ph.created||0,deleted:false,data,updatedAt:ph.created||0};
+  }
+  function itemsFor(name,v){
+    if(name==='patients'){const a=[['patients',v.expediente,recPat(v)]];for(const x of v.pendientes||[])a.push(['pendientes',x.id,recPend(v,x)]);return a}
+    if(name==='entries')return [['entries',v.id,recEnt(v)]];
+    if(name==='meta'&&v.k==='tags')return [['meta','tags',{v:v.v,updatedAt:v.updatedAt||0}]];
+    return [];
+  }
+  const due=it=>{const k=it[0]+'~'+it[1],s=it[2].updatedAt;return st.remote[k]===undefined||s>st.remote[k]};
+
+  /* --- subir --- */
+  function write(it){
+    st.remote[it[0]+'~'+it[1]]=it[2].updatedAt;st.pending++;
+    return ref(it[0],it[1]).set(it[2],{merge:true})
+      .then(()=>{st.last=now()})
+      .catch(fail)
+      .then(()=>{st.pending--;changed()});
+  }
+  function push(name,v){if(!st.uid||!st.fs)return;for(const it of itemsFor(name,v))if(due(it))write(it)}
+  async function pushPhoto(ph){
+    if(!st.uid||!st.fs||!st.syncPhotos||!ph)return;
+    try{
+      const rec=await recPhoto(ph);
+      if(!rec){logErr('foto','Foto demasiado pesada para sincronizar');return 'pesada'}
+      const it=['photos',ph.id,rec];if(due(it))write(it);
+    }catch(e){logErr('foto',e)}
+  }
+  // borrar una foto = dejar una marca (sin imagen) para que los demás dispositivos también la quiten
+  function dropPhoto(ph){
+    if(!st.uid||!st.fs||!st.syncPhotos||!ph)return;
+    write(['photos',ph.id,{id:ph.id,entry:ph.entry||'',expediente:ph.expediente||'',created:ph.created||0,deleted:true,data:'',updatedAt:now()}]);
+  }
+  // la nube solo conserva las fotos de los últimos 7 días, igual que los dispositivos
+  async function purgeRemote(){
+    if(!st.uid||!st.fs||!st.syncPhotos)return;
+    try{
+      const snap=await ref('photos').where('created','<',now()-DIAS_FOTO*DAY).get();
+      snap.forEach(d=>{d.ref.delete().catch(fail)});
+    }catch(e){logErr('limpiar nube',e)}
+  }
+  async function pushAll(){
+    if(!st.uid||!st.fs)return;
+    const items=[];
+    for(const p of await all('patients'))items.push(...itemsFor('patients',p));
+    const cut=todayStr(new Date(Date.now()-DIAS_ENT*DAY));
+    for(const e of await all('entries'))if((e.fecha||'')>=cut)items.push(...itemsFor('entries',e));
+    const t=await get('meta','tags');
+    if(t){if(!t.updatedAt){t.updatedAt=now();await put('meta',t,{nosync:true})}items.push(...itemsFor('meta',t))}
+    items.filter(due).forEach(write);
+    if(st.syncPhotos){ // fotos que ya estaban en este dispositivo y la nube todavía no tiene
+      const lim=now()-DIAS_FOTO*DAY;
+      for(const k of await rq(store('photos').getAllKeys())){
+        if(st.remote['photos~'+k]!==undefined)continue;
+        const ph=await get('photos',k);if(!ph||(ph.created||0)<lim)continue;
+        await pushPhoto(ph);
       }
-      startStep(steps);
-    } else {
-      phaseCount.textContent = secondsLeft + 's';
     }
   }
 
-  function start(){
-    running = true;
-    cycle = 0;
-    stepIndex = 0;
-    cycleCountEl.textContent = 'Ciclo 0';
-    toggleBtn.textContent = 'Detener';
-    patternSelect.disabled = true;
-    hint.style.opacity = '0';
-
-    const steps = patterns[patternSelect.value];
-    startStep(steps);
-    tickTimer = setInterval(tick, 1000);
+  /* --- bajar --- */
+  async function applyRemote(name,r){
+    if(name==='patients'){
+      const cur=await get('patients',r.expediente),rs=r.updatedAt||0;
+      if(!st.forceNames&&cur&&patStamp(cur)>=rs)return null;
+      const p=cur||{expediente:r.expediente,nombre:'',pendientes:[],updatedAt:0};
+      if(st.syncNames&&typeof r.nombre==='string')p.nombre=r.nombre;
+      if('acceso' in r)p.acceso=r.acceso;if('aviso' in r)p.aviso=r.aviso;
+      p.pu=rs;p.updatedAt=Math.max(p.updatedAt||0,rs);
+      await put('patients',p,{nosync:true});return p;
+    }
+    if(name==='pendientes'){
+      let p=await get('patients',r.expediente);
+      if(!p)p={expediente:r.expediente,nombre:'',pendientes:[],updatedAt:0,pu:0};
+      const i=p.pendientes.findIndex(x=>x.id===r.id),rs=r.updatedAt||0;
+      if(i>=0&&pStamp(p.pendientes[i])>=rs)return null;
+      const item={id:r.id,texto:r.texto,hecho:!!r.hecho,hechoEn:r.hechoEn||null,creado:r.creado||0,updatedAt:rs,del:!!r.del};
+      if(i>=0)p.pendientes[i]=item;else p.pendientes.push(item);
+      p.updatedAt=Math.max(p.updatedAt||0,rs);
+      await put('patients',p,{nosync:true});return p;
+    }
+    if(name==='entries'){
+      const cur=await get('entries',r.id);
+      if(cur&&(cur.updatedAt||0)>=(r.updatedAt||0))return null;
+      // las fotos que ya llegaron antes que su sesión se enlazan aquí
+      const ids=await photoIdsOf(r.id);
+      const e={...r,fotos:[...new Set([...(cur&&cur.fotos||[]),...ids])]};
+      await put('entries',e,{nosync:true});return e;
+    }
+    if(name==='photos'){
+      const cur=await get('photos',r.id);
+      if(r.deleted){
+        if(cur)await del('photos',r.id);
+        const e=await get('entries',r.entry);
+        if(e&&(e.fotos||[]).includes(r.id)){e.fotos=e.fotos.filter(x=>x!==r.id);await put('entries',e,{nosync:true})}
+        return cur?{photo:true,entry:r.entry}:null;
+      }
+      if(cur||!r.data||(r.created||0)<now()-DIAS_FOTO*DAY)return null;
+      const blob=await (await fetch(r.data)).blob();
+      await putRaw('photos',{id:r.id,blob,created:r.created,entry:r.entry,expediente:r.expediente});
+      const e=await get('entries',r.entry);
+      if(e){if(!e.fotos)e.fotos=[];if(!e.fotos.includes(r.id)){e.fotos.push(r.id);await put('entries',e,{nosync:true})}}
+      return {photo:true,entry:r.entry};
+    }
+    if(name==='meta'&&r.v&&Array.isArray(r.v)){
+      const cur=await get('meta','tags');
+      if(cur&&(cur.updatedAt||0)>=(r.updatedAt||0))return null;
+      await put('meta',{k:'tags',v:r.v,updatedAt:r.updatedAt||0},{nosync:true});return {tags:true};
+    }
+    return null;
   }
-
-  function stop(){
-    running = false;
-    clearInterval(tickTimer);
-    toggleBtn.textContent = 'Empezar';
-    patternSelect.disabled = false;
-    app.setAttribute('data-phase', 'listo');
-    phaseWord.textContent = 'Listo';
-    phaseCount.textContent = '';
-    hint.style.opacity = '0.7';
-    hint.textContent = 'Elige un ritmo y presiona empezar';
-
-    const planet = document.querySelector('.planet');
-    const glow = document.querySelector('.glow');
-    const ring = document.querySelector('.ring');
-    [planet, glow, ring].forEach(el=>{
-      el.style.transitionDuration = '2s';
+  function afterApply(name,res){
+    try{
+      if(live){
+        if(name==='entries'&&res.id===live.e.id){if(res.deleted){live.e.deleted=true;closeSheet()}else live.setE(res)}
+        if(name==='photos'&&res.entry===live.e.id)live.refreshFotos();
+        if((name==='patients'||name==='pendientes')&&res.expediente===live.e.expediente)live.setPat(res);
+      }
+    }catch(e){logErr('sync',e)}
+    clearTimeout(afterApply.t);
+    afterApply.t=setTimeout(()=>{if(db&&!typing())render().catch(()=>{})},150);
+  }
+  function unlisten(){st.unsubs.forEach(u=>{try{u()}catch(e){}});st.unsubs=[]}
+  function listen(){
+    unlisten();st.first={};
+    const cut=todayStr(new Date(Date.now()-DIAS_ENT*DAY));
+    const defs=[['patients',ref('patients')],['pendientes',ref('pendientes')],['entries',ref('entries').where('fecha','>=',cut)],['meta',ref('meta')]];
+    if(st.syncPhotos)defs.push(['photos',ref('photos').where('created','>=',now()-DIAS_FOTO*DAY)]);
+    defs.forEach(([name,q])=>{
+      st.unsubs.push(q.onSnapshot(snap=>{
+        snap.docChanges().forEach(ch=>{
+          if(ch.type==='removed')return;
+          const d=ch.doc.data();
+          const id=name==='patients'?d.expediente:name==='meta'?ch.doc.id:d.id;
+          st.remote[name+'~'+id]=d.updatedAt||0;
+          enq(async()=>{
+            const res=await applyRemote(name,d);if(res)afterApply(name,res);
+            // al reactivar los nombres: si la nube no tiene nombre de este paciente pero aquí sí, se publica
+            if(name==='patients'&&st.forceNames&&st.syncNames&&typeof d.nombre!=='string'){
+              const p=await get('patients',d.expediente);
+              if(p&&p.nombre){p.pu=now();p.updatedAt=now();await put('patients',p)}
+            }
+          });
+        });
+        if(!st.first[name]){st.first[name]=true;if(defs.every(x=>st.first[x[0]])){enq(()=>pushAll());enq(()=>purgeRemote())}}
+        st.last=st.last||now();changed();
+      },err=>{st.err=(err&&err.code)||String(err);logErr('escuchar '+name,err);changed()}));
     });
   }
 
-  toggleBtn.addEventListener('click', ()=>{
-    if(running){ stop(); } else { start(); }
-  });
-
+  /* --- sesión --- */
+  const msgAuth=e=>{const c=(e&&e.code)||'';
+    return /invalid-credential|wrong-password|user-not-found|invalid-email/.test(c)?'Correo o contraseña incorrectos'
+      :/network/.test(c)?'Sin conexión a internet'
+      :/too-many/.test(c)?'Demasiados intentos, espera unos minutos'
+      :/unauthorized-domain/.test(c)?'Este dominio no está autorizado en Firebase'
+      :(e&&e.message)||'No se pudo iniciar sesión'};
+  function init(){
+    if(!cfgOk()){st.status='nocfg';changed();return}
+    if(typeof firebase==='undefined'){st.status='nosdk';changed();return}
+    try{
+      firebase.initializeApp(window.FIREBASE_CONFIG);
+      st.auth=firebase.auth();st.fs=firebase.firestore();
+      try{st.fs.settings({ignoreUndefinedProperties:true,experimentalAutoDetectLongPolling:true,merge:true})}catch(e){logErr('firestore',e)}
+      try{const p=st.fs.enablePersistence({synchronizeTabs:true});if(p&&p.catch)p.catch(e=>logErr('persistencia',e))}catch(e){logErr('persistencia',e)}
+    }catch(e){logErr('firebase',e);st.status='error';st.err=String((e&&e.message)||e);changed();return}
+    st.status='out';
+    st.auth.onAuthStateChanged(async u=>{
+      try{
+        if(u){const m=await get('meta','syncnames');st.syncNames=!(m&&m.v===false);
+          const m2=await get('meta','syncphotos');st.syncPhotos=!(m2&&m2.v===false);st.uid=u.uid;st.email=u.email||'';st.status='on';listen()}
+        else{unlisten();st.uid=null;st.email='';st.status='out'}
+      }catch(e){logErr('sesión',e)}
+      changed();
+    });
+    changed();
+  }
+  async function login(email,pass){
+    if(!st.auth)throw new Error('La sincronización no está disponible');
+    try{await st.auth.signInWithEmailAndPassword(email,pass)}catch(e){throw new Error(msgAuth(e))}
+  }
+  const logout=()=>st.auth?st.auth.signOut():Promise.resolve();
+  async function setNames(on){
+    st.syncNames=!!on;await put('meta',{k:'syncnames',v:!!on},{nosync:true});
+    if(st.uid){
+      if(on){st.forceNames=true;setTimeout(()=>{st.forceNames=false},20000)} // al activar: se recuperan los nombres de la nube
+      listen();
+    }
+    changed();
+  }
+  async function setPhotos(on){
+    st.syncPhotos=!!on;await put('meta',{k:'syncphotos',v:!!on},{nosync:true});
+    if(st.uid)listen(); // al encender se bajan las fotos de la nube y se suben las que solo están aquí
+    changed();
+  }
+  const syncNow=()=>{if(!st.uid)return Promise.resolve();listen();return enq(()=>pushAll())};
+  return {push,pushPhoto,dropPhoto,init,login,logout,setNames,setPhotos,syncNow,state:()=>st};
 })();
-</script>
 
+/* ---------- Inicio ---------- */
+(async()=>{
+  try{db=await openDB()}catch(e){logErr('abrir base',e);$('#main').innerHTML='<div class="empty">Este navegador no permite guardar datos locales (¿modo privado?).</div>';return}
+  await purge();
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+  await render();
+  // la sincronización arranca cuando terminan de cargar los scripts de Firebase
+  if(document.readyState==='complete')SYNC.init();else window.addEventListener('load',()=>SYNC.init());
+  setInterval(()=>purge().catch(()=>{}),36e5);
+  document.addEventListener('visibilitychange',async()=>{
+    if(document.visibilityState!=='visible')return;
+    await purge().catch(()=>{});
+    if(S.hoy&&S.fecha!==todayStr())S.fecha=todayStr();
+    if(!sheetEl)render();
+  });
+})();
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
 </body>
 </html>
